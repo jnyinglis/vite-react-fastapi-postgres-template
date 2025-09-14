@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@types/google-one-tap": "^1.2.6",
-    "axios": "^1.6.2",
+    "axios": "^1.12.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^6.26.2"
