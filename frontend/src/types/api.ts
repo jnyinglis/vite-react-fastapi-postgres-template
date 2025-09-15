@@ -27,11 +27,6 @@ export interface PaginatedResponse<T> {
 }
 
 // Authentication types
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in?: number;
-}
 
 
 
@@ -107,7 +102,13 @@ export interface ValidationError {
 
 
 export class ApiClient {
-  constructor(private baseUrl: string = '/api', private fetchFn: typeof fetch = fetch) {}
+  private baseUrl: string;
+  private fetchFn: typeof fetch;
+
+  constructor(baseUrl: string = '/api', fetchFn: typeof fetch = fetch) {
+    this.baseUrl = baseUrl;
+    this.fetchFn = fetchFn;
+  }
 
   private async fetch(path: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}${path}`;
@@ -228,16 +229,6 @@ export const apiClient = new ApiClient();
 // Utility types
 export type AuthProvider = "google" | "apple" | "email";
 
-export interface User {
-  id: string;
-  email: string;
-  fullName?: string;
-  avatarUrl?: string;
-  isActive: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // API endpoint types for better type safety
 export namespace API {
