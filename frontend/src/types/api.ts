@@ -4,7 +4,7 @@
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
  *
- * Generated at: 2025-09-15T08:53:49.040420
+ * Generated at: 2025-09-15T09:00:02.430634
  */
 
 // API Response wrapper types
@@ -138,7 +138,7 @@ export class ApiClient {
 
     const token = localStorage.getItem('access_token');
     if (token) {
-      (defaultHeaders as any)['Authorization'] = `Bearer ${token}`;
+      (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await this.fetchFn(url, {
@@ -156,13 +156,13 @@ export class ApiClient {
     return response;
   }
 
-  async rootGet(): Promise<any> {
+  async rootGet(): Promise<unknown> {
     const response = await this.fetch('/', {
       method: 'GET',
     });
     return response.json();
   }
-  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<any> {
+  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<unknown> {
     const response = await this.fetch('/.well-known/security.txt', {
       method: 'GET',
     });
@@ -175,7 +175,7 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getAuthConfigApiAuthConfigGet(): Promise<Record<string, any>> {
+  async getAuthConfigApiAuthConfigGet(): Promise<Record<string, unknown>> {
     const response = await this.fetch('/api/auth/config', {
       method: 'GET',
     });
@@ -229,7 +229,7 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, any>> {
+  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, unknown>> {
     const response = await this.fetch('/api/build-info', {
       method: 'GET',
     });
@@ -253,13 +253,13 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getRobotsRobotsTxtGet(): Promise<any> {
+  async getRobotsRobotsTxtGet(): Promise<unknown> {
     const response = await this.fetch('/robots.txt', {
       method: 'GET',
     });
     return response.json();
   }
-  async getSitemapSitemapXmlGet(): Promise<any> {
+  async getSitemapSitemapXmlGet(): Promise<unknown> {
     const response = await this.fetch('/sitemap.xml', {
       method: 'GET',
     });
@@ -274,32 +274,26 @@ export const apiClient = new ApiClient();
 export type AuthProvider = "google" | "apple" | "email";
 
 // API endpoint types for better type safety
-export namespace API {
-  export namespace Auth {
-    export interface GoogleRequest {
-      credential: string;
-      clientId: string;
-    }
+export interface ApiAuthGoogleRequest {
+  credential: string;
+  clientId: string;
+}
 
-    export interface MagicLinkRequest {
-      email: string;
-    }
+export interface ApiAuthMagicLinkRequest {
+  email: string;
+}
 
-    export interface MagicLinkVerify {
-      token: string;
-    }
-  }
+export interface ApiAuthMagicLinkVerify {
+  token: string;
+}
 
-  export namespace Users {
-    export interface CreateRequest {
-      email: string;
-      fullName?: string;
-      password?: string;
-    }
+export interface ApiUsersCreateRequest {
+  email: string;
+  fullName?: string;
+  password?: string;
+}
 
-    export interface UpdateRequest {
-      fullName?: string;
-      avatarUrl?: string;
-    }
-  }
+export interface ApiUsersUpdateRequest {
+  fullName?: string;
+  avatarUrl?: string;
 }

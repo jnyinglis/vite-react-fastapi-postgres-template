@@ -74,7 +74,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
 
             return "{\n" + "\n".join(properties) + "\n}"
         else:
-            return "Record<string, any>"
+            return "Record<string, unknown>"
 
     # Handle unions/oneOf
     if 'oneOf' in schema or 'anyOf' in schema:
@@ -108,7 +108,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
         elif schema_format == 'uuid':
             return 'string'
 
-    return type_mapping.get(schema_type, 'any')
+    return type_mapping.get(schema_type, 'unknown')
 
 
 def generate_interface(name: str, schema: Dict[str, Any], definitions: Dict[str, Any]) -> str:
@@ -183,7 +183,7 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
                     request_type = get_ts_type(request_schema, definitions)
 
             # Response type
-            response_type = 'any'
+            response_type = 'unknown'
             if '200' in responses:
                 response_content = responses['200'].get('content', {})
                 if 'application/json' in response_content:
@@ -225,7 +225,7 @@ export class ApiClient {{
 
     const token = localStorage.getItem('access_token');
     if (token) {{
-      (defaultHeaders as any)['Authorization'] = `Bearer ${{token}}`;
+      (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${{token}}`;
     }}
 
     const response = await this.fetchFn(url, {{
@@ -322,34 +322,28 @@ export interface TokenResponse {{
 export type AuthProvider = "google" | "apple" | "email";
 
 // API endpoint types for better type safety
-export namespace {config.namespace} {{
-  export namespace Auth {{
-    export interface GoogleRequest {{
-      credential: string;
-      clientId: string;
-    }}
+export interface ApiAuthGoogleRequest {{
+  credential: string;
+  clientId: string;
+}}
 
-    export interface MagicLinkRequest {{
-      email: string;
-    }}
+export interface ApiAuthMagicLinkRequest {{
+  email: string;
+}}
 
-    export interface MagicLinkVerify {{
-      token: string;
-    }}
-  }}
+export interface ApiAuthMagicLinkVerify {{
+  token: string;
+}}
 
-  export namespace Users {{
-    export interface CreateRequest {{
-      email: string;
-      fullName?: string;
-      password?: string;
-    }}
+export interface ApiUsersCreateRequest {{
+  email: string;
+  fullName?: string;
+  password?: string;
+}}
 
-    export interface UpdateRequest {{
-      fullName?: string;
-      avatarUrl?: string;
-    }}
-  }}
+export interface ApiUsersUpdateRequest {{
+  fullName?: string;
+  avatarUrl?: string;
 }}
 '''
 
