@@ -2,11 +2,12 @@ from typing import List
 from fastapi import APIRouter, Response
 from datetime import datetime
 from app.core.config import settings
+from app.schemas.response import TextResponse
 
 router = APIRouter()
 
 
-@router.get("/sitemap.xml", response_class=Response)
+@router.get("/sitemap.xml", response_class=Response, responses={200: {"content": {"application/xml": {}}}})
 async def get_sitemap() -> Response:
     """Generate dynamic XML sitemap"""
 
@@ -66,7 +67,7 @@ async def get_sitemap() -> Response:
     )
 
 
-@router.get("/robots.txt", response_class=Response)
+@router.get("/robots.txt", response_class=Response, responses={200: {"content": {"text/plain": {}}}})
 async def get_robots() -> Response:
     """Serve robots.txt with environment-specific rules"""
 
@@ -100,7 +101,7 @@ Disallow: /"""
     )
 
 
-@router.get("/.well-known/security.txt", response_class=Response)
+@router.get("/.well-known/security.txt", response_class=Response, responses={200: {"content": {"text/plain": {}}}})
 async def get_security_txt() -> Response:
     """Security.txt for responsible disclosure"""
 
