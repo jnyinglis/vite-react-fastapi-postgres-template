@@ -6,6 +6,7 @@ This module provides security configurations and utilities for production deploy
 
 from typing import List, Dict, Any, Callable, Awaitable, Optional
 from fastapi import Request, HTTPException, status, FastAPI
+from app.schemas.config import CorsConfig
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -105,15 +106,15 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def get_cors_config() -> Dict[str, Any]:
+def get_cors_config() -> CorsConfig:
     """Get CORS configuration based on environment."""
     if settings.environment == "production":
         # Production CORS - restrictive
-        return {
-            "allow_origins": [settings.frontend_url],
-            "allow_credentials": True,
-            "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": [
+        return CorsConfig(
+            allow_origins=[settings.frontend_url],
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            allow_headers=[
                 "Authorization",
                 "Content-Type",
                 "X-Requested-With",
@@ -121,18 +122,18 @@ def get_cors_config() -> Dict[str, Any]:
                 "Origin",
                 "User-Agent",
             ],
-            "expose_headers": ["X-Request-ID"],
-            "max_age": 86400,  # 24 hours
-        }
+            expose_headers=["X-Request-ID"],
+            max_age=86400,  # 24 hours
+        )
     else:
         # Development CORS - permissive
-        return {
-            "allow_origins": ["http://localhost:5173", "http://localhost:3000"],
-            "allow_credentials": True,
-            "allow_methods": ["*"],
-            "allow_headers": ["*"],
-            "max_age": 600,  # 10 minutes
-        }
+        return CorsConfig(
+            allow_origins=["http://localhost:5173", "http://localhost:3000"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+            max_age=600,  # 10 minutes
+        )
 
 
 def get_trusted_hosts() -> List[str]:
@@ -239,6 +240,6 @@ def apply_security_middleware(app: FastAPI) -> FastAPI:
 
     # Add CORS middleware
     cors_config = get_cors_config()
-    app.add_middleware(CORSMiddleware, **cors_config)
+    app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
     return app

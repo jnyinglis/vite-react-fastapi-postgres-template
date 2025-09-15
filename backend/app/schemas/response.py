@@ -13,3 +13,14 @@ class HealthResponse(BaseModel):
 
 class TextResponse(BaseModel):
     content: str
+
+
+class BuildInfoResponse(BaseModel):
+    """Build information response schema."""
+    version: str
+    buildNumber: str
+    gitCommit: str
+    gitBranch: str
+    environment: str
+    buildTime: str
+    service: str

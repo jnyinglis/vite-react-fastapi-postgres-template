@@ -38,7 +38,7 @@ def sanitize_name(name: str) -> str:
     return components[0] + ''.join(word.capitalize() for word in components[1:])
 
 
-def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fields: Set[str] = None, field_name: str = "") -> str:
+def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fields: Optional[Set[str]] = None, field_name: str = "") -> str:
     """Convert OpenAPI schema to TypeScript type."""
     if required_fields is None:
         required_fields = set()
@@ -51,7 +51,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
         ref_path = schema['$ref']
         if ref_path.startswith('#/'):
             ref_name = ref_path.split('/')[-1]
-            return ref_name
+            return str(ref_name)
 
     # Handle arrays
     if schema_type == 'array':
@@ -77,7 +77,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
 
     # Handle unions/oneOf
     if 'oneOf' in schema or 'anyOf' in schema:
-        options = schema.get('oneOf') or schema.get('anyOf')
+        options = schema.get('oneOf') or schema.get('anyOf') or []
         types = [get_ts_type(option, definitions, required_fields) for option in options]
         return " | ".join(types)
 
@@ -107,7 +107,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
         elif schema_format == 'uuid':
             return 'string'
 
-    return type_mapping.get(schema_type, 'unknown')
+    return type_mapping.get(schema_type or 'unknown', 'unknown')
 
 
 def generate_interface(name: str, schema: Dict[str, Any], definitions: Dict[str, Any]) -> str:
@@ -170,7 +170,8 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
             if path_params:
                 for param in path_params:
                     param_name = sanitize_name(param['name'])
-                    param_type = get_ts_type(param.get('schema', {}), definitions)
+                    param_schema = param.get('schema', {})
+                    param_type = get_ts_type(param_schema, definitions)
                     param_types.append(f"{param_name}: {param_type}")
 
             # Request body type
@@ -261,7 +262,7 @@ export class ApiClient {{
 export const apiClient = new ApiClient();"""
 
 
-def main():
+def main() -> None:
     """Generate TypeScript types from FastAPI OpenAPI schema."""
     config = TypeGenConfig()
 

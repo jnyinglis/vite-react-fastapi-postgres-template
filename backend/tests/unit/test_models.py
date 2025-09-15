@@ -1,5 +1,6 @@
 import pytest
 from datetime import datetime
+from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -11,7 +12,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_creation(self, async_session: AsyncSession):
+    async def test_user_creation(self, async_session: AsyncSession) -> None:
         """Test creating a new user."""
         user = User(
             email="test@example.com",
@@ -32,7 +33,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_email_unique_constraint(self, async_session: AsyncSession):
+    async def test_user_email_unique_constraint(self, async_session: AsyncSession) -> None:
         """Test that email field has unique constraint."""
         user1 = User(
             email="unique@example.com",
@@ -57,7 +58,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_timestamps_auto_populate(self, async_session: AsyncSession):
+    async def test_user_timestamps_auto_populate(self, async_session: AsyncSession) -> None:
         """Test that timestamps are automatically populated."""
         before_creation = datetime.utcnow()
 
@@ -79,7 +80,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_update_timestamp(self, async_session: AsyncSession):
+    async def test_user_update_timestamp(self, async_session: AsyncSession) -> None:
         """Test that updated_at timestamp changes on update."""
         user = User(
             email="update@example.com",
@@ -97,14 +98,14 @@ class TestUserModel:
         await asyncio.sleep(0.1)
 
         # Update user
-        user.full_name = "Updated User"
+        user.full_name = "Updated User"  # type: ignore
         await async_session.commit()
 
         assert user.updated_at > original_updated_at
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_default_timezone(self, async_session: AsyncSession):
+    async def test_user_default_timezone(self, async_session: AsyncSession) -> None:
         """Test user default timezone is UTC."""
         user = User(
             email="timezone@example.com",
@@ -119,7 +120,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_custom_timezone(self, async_session: AsyncSession):
+    async def test_user_custom_timezone(self, async_session: AsyncSession) -> None:
         """Test setting custom timezone."""
         user = User(
             email="custom_tz@example.com",
@@ -135,7 +136,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_query_by_email(self, async_session: AsyncSession):
+    async def test_user_query_by_email(self, async_session: AsyncSession) -> None:
         """Test querying user by email."""
         user = User(
             email="query@example.com",
@@ -158,7 +159,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_query_by_provider(self, async_session: AsyncSession):
+    async def test_user_query_by_provider(self, async_session: AsyncSession) -> None:
         """Test querying users by provider."""
         google_user = User(
             email="google@example.com",
@@ -195,7 +196,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_provider_id_combination(self, async_session: AsyncSession):
+    async def test_user_provider_id_combination(self, async_session: AsyncSession) -> None:
         """Test that provider + provider_id combination works correctly."""
         user = User(
             email="provider_combo@example.com",
@@ -218,7 +219,7 @@ class TestUserModel:
         assert found_user.email == "provider_combo@example.com"
 
     @pytest.mark.unit
-    def test_user_model_repr(self):
+    def test_user_model_repr(self) -> None:
         """Test the string representation of User model."""
         user = User(
             email="repr@example.com",
@@ -232,7 +233,7 @@ class TestUserModel:
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_nullable_fields(self, async_session: AsyncSession):
+    async def test_user_nullable_fields(self, async_session: AsyncSession) -> None:
         """Test handling of nullable fields."""
         # Test with minimal required fields
         user = User(
@@ -245,11 +246,11 @@ class TestUserModel:
         await async_session.commit()
 
         assert user.full_name is None
-        assert user.timezone == "UTC"
+        assert user.timezone == "UTC"  # type: ignore[unreachable]
 
     @pytest.mark.unit
     @pytest.mark.database
-    async def test_user_field_lengths(self, async_session: AsyncSession):
+    async def test_user_field_lengths(self, async_session: AsyncSession) -> None:
         """Test field length constraints."""
         # Test normal length fields
         user = User(

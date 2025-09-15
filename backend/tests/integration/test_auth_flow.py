@@ -1,10 +1,11 @@
 import pytest
+from unittest.mock import patch
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.user import User
-from app.schemas.auth import GoogleAuthRequest, AppleAuthRequest, MagicLinkRequest
+from app.schemas.auth import GoogleAuthRequest, AppleAuthRequest, AppleAuthAuthorization, AppleAuthUser, AppleAuthUserName, MagicLinkRequest
 
 
 class TestAuthenticationFlow:
@@ -12,7 +13,7 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.auth
-    async def test_google_auth_new_user_flow(self, async_client: AsyncClient, async_session: AsyncSession):
+    async def test_google_auth_new_user_flow(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test complete Google auth flow for a new user."""
         # Ensure user doesn't exist
         result = await async_session.execute(
@@ -23,11 +24,10 @@ class TestAuthenticationFlow:
 
         google_data = GoogleAuthRequest(
             credential="fake_jwt_token",
-            clientId="fake_client_id"
-        )
+                    )
 
         # Mock Google token verification
-        with pytest.mock.patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.verify_google_token') as mock_verify:
             mock_verify.return_value = {
                 'email': 'newuser@example.com',
                 'name': 'New User'
@@ -54,7 +54,7 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.auth
-    async def test_google_auth_existing_user_flow(self, async_client: AsyncClient, async_session: AsyncSession):
+    async def test_google_auth_existing_user_flow(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test Google auth flow for an existing user."""
         # Create existing user
         existing_user = User(
@@ -67,10 +67,9 @@ class TestAuthenticationFlow:
 
         google_data = GoogleAuthRequest(
             credential="fake_jwt_token",
-            clientId="fake_client_id"
-        )
+                    )
 
-        with pytest.mock.patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.verify_google_token') as mock_verify:
             mock_verify.return_value = {
                 'email': 'existing@example.com',
                 'name': 'Existing User Updated'
@@ -94,20 +93,20 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.auth
-    async def test_apple_auth_new_user_flow(self, async_client: AsyncClient, async_session: AsyncSession):
+    async def test_apple_auth_new_user_flow(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test complete Apple auth flow for a new user."""
         apple_data = AppleAuthRequest(
-            authorization={
-                'code': 'fake_auth_code',
-                'id_token': 'fake_id_token'
-            },
-            user={
-                'email': 'appleuser@example.com',
-                'name': {
-                    'firstName': 'Apple',
-                    'lastName': 'User'
-                }
-            }
+            authorization=AppleAuthAuthorization(
+                code='fake_auth_code',
+                id_token='fake_id_token'
+            ),
+            user=AppleAuthUser(
+                email='appleuser@example.com',
+                name=AppleAuthUserName(
+                    firstName='Apple',
+                    lastName='User'
+                )
+            )
         )
 
         mock_payload = {
@@ -115,7 +114,7 @@ class TestAuthenticationFlow:
             'sub': 'apple_user_123'
         }
 
-        with pytest.mock.patch('pyjwt.decode') as mock_decode:
+        with patch('pyjwt.decode') as mock_decode:
             mock_decode.return_value = mock_payload
 
             response = await async_client.post(
@@ -138,7 +137,7 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.auth
-    async def test_apple_auth_without_user_data(self, async_client: AsyncClient, async_session: AsyncSession):
+    async def test_apple_auth_without_user_data(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test Apple auth flow without user data (subsequent logins)."""
         # Create existing user
         existing_user = User(
@@ -150,10 +149,10 @@ class TestAuthenticationFlow:
         await async_session.commit()
 
         apple_data = AppleAuthRequest(
-            authorization={
-                'code': 'fake_auth_code',
-                'id_token': 'fake_id_token'
-            }
+            authorization=AppleAuthAuthorization(
+                code='fake_auth_code',
+                id_token='fake_id_token'
+            )
             # No user data - Apple only provides this on first login
         )
 
@@ -162,7 +161,7 @@ class TestAuthenticationFlow:
             'sub': 'apple_existing_123'
         }
 
-        with pytest.mock.patch('pyjwt.decode') as mock_decode:
+        with patch('pyjwt.decode') as mock_decode:
             mock_decode.return_value = mock_payload
 
             response = await async_client.post(
@@ -176,7 +175,7 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.auth
-    async def test_magic_link_complete_flow(self, async_client: AsyncClient, async_session: AsyncSession):
+    async def test_magic_link_complete_flow(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test complete magic link authentication flow."""
         magic_link_data = MagicLinkRequest(
             email="magiclink@example.com"
@@ -203,7 +202,7 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.auth
-    async def test_cross_provider_user_handling(self, async_client: AsyncSession, async_session: AsyncSession):
+    async def test_cross_provider_user_handling(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test handling of users who authenticate with different providers."""
         # Create user with Google
         google_user = User(
@@ -216,17 +215,17 @@ class TestAuthenticationFlow:
 
         # Try to authenticate same email with Apple
         apple_data = AppleAuthRequest(
-            authorization={
-                'code': 'fake_auth_code',
-                'id_token': 'fake_id_token'
-            },
-            user={
-                'email': 'crossuser@example.com',
-                'name': {
-                    'firstName': 'Cross',
-                    'lastName': 'User'
-                }
-            }
+            authorization=AppleAuthAuthorization(
+                code='fake_auth_code',
+                id_token='fake_id_token'
+            ),
+            user=AppleAuthUser(
+                email='crossuser@example.com',
+                name=AppleAuthUserName(
+                    firstName='Cross',
+                    lastName='User'
+                )
+            )
         )
 
         mock_payload = {
@@ -234,7 +233,7 @@ class TestAuthenticationFlow:
             'sub': 'apple_cross_123'
         }
 
-        with pytest.mock.patch('pyjwt.decode') as mock_decode:
+        with patch('pyjwt.decode') as mock_decode:
             mock_decode.return_value = mock_payload
 
             response = await async_client.post(
@@ -249,14 +248,13 @@ class TestAuthenticationFlow:
 
     @pytest.mark.integration
     @pytest.mark.database
-    async def test_user_persistence_after_auth(self, async_client: AsyncClient, async_session: AsyncSession):
+    async def test_user_persistence_after_auth(self, async_client: AsyncClient, async_session: AsyncSession) -> None:
         """Test that user data persists correctly after authentication."""
         google_data = GoogleAuthRequest(
             credential="fake_jwt_token",
-            clientId="fake_client_id"
-        )
+                    )
 
-        with pytest.mock.patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.verify_google_token') as mock_verify:
             mock_verify.return_value = {
                 'email': 'persistent@example.com',
                 'name': 'Persistent User'

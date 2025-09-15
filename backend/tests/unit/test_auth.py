@@ -1,21 +1,21 @@
 import pytest
 import jwt as pyjwt
+from typing import Any, Dict
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
 from httpx import AsyncClient
 
-from app.schemas.auth import GoogleAuthRequest, AppleAuthRequest, MagicLinkRequest
+from app.schemas.auth import GoogleAuthRequest, AppleAuthRequest, AppleAuthAuthorization, AppleAuthUser, AppleAuthUserName, MagicLinkRequest
 
 
 class TestAuthEndpoints:
     """Test authentication endpoint behaviors."""
 
     @pytest.mark.auth
-    async def test_google_auth_success(self, async_client: AsyncClient, sample_user_data):
+    async def test_google_auth_success(self, async_client: AsyncClient, sample_user_data: Dict[str, str]) -> None:
         """Test successful Google authentication."""
         google_data = GoogleAuthRequest(
-            credential="fake_jwt_token",
-            clientId="fake_client_id"
+            credential="fake_jwt_token"
         )
 
         with patch('app.api.auth.verify_google_token') as mock_verify:
@@ -36,11 +36,10 @@ class TestAuthEndpoints:
             assert data["token_type"] == "bearer"
 
     @pytest.mark.auth
-    async def test_google_auth_invalid_token(self, async_client: AsyncClient):
+    async def test_google_auth_invalid_token(self, async_client: AsyncClient) -> None:
         """Test Google authentication with invalid token."""
         google_data = GoogleAuthRequest(
-            credential="invalid_jwt_token",
-            clientId="fake_client_id"
+            credential="invalid_jwt_token"
         )
 
         with patch('app.api.auth.verify_google_token') as mock_verify:
@@ -54,7 +53,7 @@ class TestAuthEndpoints:
             assert response.status_code == 400
 
     @pytest.mark.auth
-    async def test_apple_auth_success(self, async_client: AsyncClient, sample_user_data):
+    async def test_apple_auth_success(self, async_client: AsyncClient, sample_user_data: Dict[str, str]) -> None:
         """Test successful Apple authentication."""
         # Create a mock JWT token payload
         mock_payload = {
@@ -63,17 +62,17 @@ class TestAuthEndpoints:
         }
 
         apple_data = AppleAuthRequest(
-            authorization={
-                'code': 'fake_auth_code',
-                'id_token': 'fake_id_token'
-            },
-            user={
-                'email': sample_user_data['email'],
-                'name': {
-                    'firstName': 'Test',
-                    'lastName': 'User'
-                }
-            }
+            authorization=AppleAuthAuthorization(
+                code='fake_auth_code',
+                id_token='fake_id_token'
+            ),
+            user=AppleAuthUser(
+                email=sample_user_data['email'],
+                name=AppleAuthUserName(
+                    firstName='Test',
+                    lastName='User'
+                )
+            )
         )
 
         with patch('pyjwt.decode') as mock_decode:
@@ -91,13 +90,13 @@ class TestAuthEndpoints:
             assert data["token_type"] == "bearer"
 
     @pytest.mark.auth
-    async def test_apple_auth_invalid_token(self, async_client: AsyncClient):
+    async def test_apple_auth_invalid_token(self, async_client: AsyncClient) -> None:
         """Test Apple authentication with invalid JWT token."""
         apple_data = AppleAuthRequest(
-            authorization={
-                'code': 'fake_auth_code',
-                'id_token': 'invalid_token'
-            }
+            authorization=AppleAuthAuthorization(
+                code='fake_auth_code',
+                id_token='invalid_token'
+            )
         )
 
         with patch('pyjwt.decode') as mock_decode:
@@ -111,7 +110,7 @@ class TestAuthEndpoints:
             assert response.status_code == 400
 
     @pytest.mark.auth
-    async def test_magic_link_request_success(self, async_client: AsyncClient):
+    async def test_magic_link_request_success(self, async_client: AsyncClient) -> None:
         """Test successful magic link request."""
         magic_link_data = MagicLinkRequest(
             email="test@example.com"
@@ -127,7 +126,7 @@ class TestAuthEndpoints:
         assert "message" in data
 
     @pytest.mark.auth
-    async def test_magic_link_invalid_email(self, async_client: AsyncClient):
+    async def test_magic_link_invalid_email(self, async_client: AsyncClient) -> None:
         """Test magic link request with invalid email."""
         magic_link_data = {
             "email": "invalid_email"
@@ -141,7 +140,7 @@ class TestAuthEndpoints:
         assert response.status_code == 422  # Validation error
 
     @pytest.mark.auth
-    async def test_verify_magic_link_success(self, async_client: AsyncClient, sample_user_data):
+    async def test_verify_magic_link_success(self, async_client: AsyncClient, sample_user_data: Dict[str, str]) -> None:
         """Test successful magic link verification."""
         # This would need to be implemented in the actual auth endpoint
         token = "fake_magic_link_token"
@@ -157,7 +156,7 @@ class TestAuthEndpoints:
             assert response.status_code in [200, 404]
 
     @pytest.mark.auth
-    async def test_verify_magic_link_invalid_token(self, async_client: AsyncClient):
+    async def test_verify_magic_link_invalid_token(self, async_client: AsyncClient) -> None:
         """Test magic link verification with invalid token."""
         token = "invalid_token"
 
@@ -171,7 +170,7 @@ class TestTokenGeneration:
     """Test JWT token generation and validation."""
 
     @pytest.mark.unit
-    def test_create_access_token(self):
+    def test_create_access_token(self) -> None:
         """Test JWT token creation."""
         from app.core.security import create_access_token
 
@@ -183,7 +182,7 @@ class TestTokenGeneration:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_verify_token_valid(self):
+    async def test_verify_token_valid(self) -> None:
         """Test JWT token verification with valid token."""
         from app.core.security import create_access_token, verify_token
 
@@ -195,7 +194,7 @@ class TestTokenGeneration:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_verify_token_invalid(self):
+    async def test_verify_token_invalid(self) -> None:
         """Test JWT token verification with invalid token."""
         from app.core.security import verify_token
 

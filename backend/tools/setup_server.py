@@ -8,7 +8,7 @@ import secrets
 import string
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -174,7 +174,7 @@ def slugify(text: str) -> str:
     return slug.strip('-')
 
 
-def update_json_file(file_path: Path, updates: Dict[str, any]) -> None:
+def update_json_file(file_path: Path, updates: Dict[str, Any]) -> None:
     """Update a JSON file with new values."""
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
@@ -270,14 +270,14 @@ app.add_middleware(
 
 
 @app.get("/api/vars")
-def get_vars():
+def get_vars() -> Dict[str, Any]:
     envs = load_envs()
     data = {k: envs.get(k, "") for k in REQUIRED_ENV_KEYS}
     return {"env": data, "file": str(ENV_FILE)}
 
 
 @app.post("/api/vars")
-def set_vars(payload: Dict[str, Dict[str, str]]):
+def set_vars(payload: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
     updates = payload.get("updates", {})
     if not isinstance(updates, dict):
         raise HTTPException(status_code=400, detail="Invalid payload: updates required")
@@ -288,7 +288,7 @@ def set_vars(payload: Dict[str, Dict[str, str]]):
 
 
 @app.get("/api/scripts")
-def scripts():
+def scripts() -> Dict[str, List[str]]:
     return {
         "make": list_make_targets(),
         "pnpm": list_pnpm_scripts(),
@@ -296,7 +296,7 @@ def scripts():
 
 
 @app.post("/api/run")
-def run(payload: Dict[str, object]):
+def run(payload: Dict[str, object]) -> Dict[str, str]:
     runner = payload.get("runner")
     name = payload.get("name")
     args = payload.get("args", [])
@@ -309,7 +309,7 @@ def run(payload: Dict[str, object]):
 
 
 @app.post("/api/ghcr-login")
-def ghcr_login(payload: Dict[str, str]):
+def ghcr_login(payload: Dict[str, str]) -> Dict[str, Any]:
     username = payload.get("username")
     token = payload.get("token")
     if not username or not token:
@@ -333,18 +333,18 @@ def ghcr_login(payload: Dict[str, str]):
 
 
 @app.post("/api/generate-secret")
-def generate_secret(length: Optional[int] = 64):
+def generate_secret(length: Optional[int] = 64) -> Dict[str, str]:
     """Generate a secure secret key."""
-    if length < 16 or length > 128:
+    if length is not None and (length < 16 or length > 128):
         raise HTTPException(status_code=400, detail="Length must be between 16 and 128")
-    return {"secret": generate_secure_key(length)}
+    return {"secret": generate_secure_key(length or 64)}
 
 
 @app.post("/api/apply-configuration")
-def apply_configuration(config: AppConfiguration):
+def apply_configuration(config: AppConfiguration) -> Dict[str, Any]:
     """Apply comprehensive application configuration."""
     try:
-        results = {"updated": [], "errors": []}
+        results: Dict[str, List[str]] = {"updated": [], "errors": []}
 
         # 1. Update environment variables
         try:
@@ -427,7 +427,7 @@ def apply_configuration(config: AppConfiguration):
 
 
 @app.get("/api/app-config")
-def get_app_config():
+def get_app_config() -> Dict[str, Dict[str, str]]:
     """Get current app configuration from various sources."""
     config = {}
 

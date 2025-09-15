@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 from app.core.database import create_tables
 from app.api import auth, users, health, build_info, seo
 from app.core.security_config import apply_security_middleware, validate_security_config
@@ -17,7 +19,7 @@ from app.schemas.response import MessageResponse
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     # Setup logging first
     setup_logging()
@@ -60,8 +62,8 @@ app = apply_security_middleware(app)
 app.add_middleware(RequestLoggingMiddleware)
 
 # Add error handlers
-app.add_exception_handler(APIError, api_error_handler)
-app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(APIError, api_error_handler)  # type: ignore[arg-type]
+app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(Exception, general_exception_handler)
 
 # Include routers
