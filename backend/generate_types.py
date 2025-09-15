@@ -66,7 +66,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
             properties = []
             required = set(schema.get('required', []))
 
-            for prop_name, prop_schema in schema['properties'].items():
+            for prop_name, prop_schema in sorted(schema['properties'].items()):
                 prop_type = get_ts_type(prop_schema, definitions, required)
                 optional = "?" if prop_name not in required else ""
                 sanitized_name = sanitize_name(prop_name)
@@ -117,7 +117,7 @@ def generate_interface(name: str, schema: Dict[str, Any], definitions: Dict[str,
     required = set(schema.get('required', []))
 
     if 'properties' in schema:
-        for prop_name, prop_schema in schema['properties'].items():
+        for prop_name, prop_schema in sorted(schema['properties'].items()):
             prop_type = get_ts_type(prop_schema, definitions, required)
             optional = "?" if prop_name not in required else ""
             sanitized_name = sanitize_name(prop_name)
@@ -145,8 +145,8 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
     """Generate a simple API client with typed methods."""
     client_methods = []
 
-    for path, methods in paths.items():
-        for method, operation in methods.items():
+    for path, methods in sorted(paths.items()):
+        for method, operation in sorted(methods.items()):
             if method.lower() not in ['get', 'post', 'put', 'patch', 'delete']:
                 continue
 
@@ -260,8 +260,8 @@ def main():
     # Generate TypeScript interfaces
     interfaces = []
 
-    # Generate interfaces for all schemas
-    for name, schema in schemas.items():
+    # Generate interfaces for all schemas (sorted for deterministic output)
+    for name, schema in sorted(schemas.items()):
         if schema.get('type') == 'object' or 'properties' in schema:
             interface = generate_interface(name, schema, schemas)
             interfaces.append(interface)
