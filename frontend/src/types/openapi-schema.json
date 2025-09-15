@@ -96,6 +96,50 @@
         "title": "AppleAuthUserName",
         "type": "object"
       },
+      "BuildInfoResponse": {
+        "description": "Build information response schema.",
+        "properties": {
+          "buildNumber": {
+            "title": "Buildnumber",
+            "type": "string"
+          },
+          "buildTime": {
+            "title": "Buildtime",
+            "type": "string"
+          },
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "gitBranch": {
+            "title": "Gitbranch",
+            "type": "string"
+          },
+          "gitCommit": {
+            "title": "Gitcommit",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "buildNumber",
+          "gitCommit",
+          "gitBranch",
+          "environment",
+          "buildTime",
+          "service"
+        ],
+        "title": "BuildInfoResponse",
+        "type": "object"
+      },
       "EmailAuth": {
         "properties": {
           "email": {
@@ -778,9 +822,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Build Info Api Build Info Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/BuildInfoResponse"
                 }
               }
             },

@@ -52,6 +52,16 @@ export interface AppleAuthUserName {
   firstName?: string | null;
   lastName?: string | null;
 }
+/** Build information response schema. */
+export interface BuildInfoResponse {
+  buildNumber: string;
+  buildTime: string;
+  environment: string;
+  gitBranch: string;
+  gitCommit: string;
+  service: string;
+  version: string;
+}
 
 export interface EmailAuth {
   email: string;
@@ -227,7 +237,7 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, unknown>> {
+  async getBuildInfoApiBuildInfoGet(): Promise<BuildInfoResponse> {
     const response = await this.fetch('/api/build-info', {
       method: 'GET',
     });
