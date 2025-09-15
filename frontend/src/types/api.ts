@@ -4,10 +4,6 @@
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
  *
- * NOTE: Generated types may differ between Python versions (3.11 vs 3.13+)
- * due to differences in FastAPI/Pydantic OpenAPI schema generation.
- * This is expected and both versions produce functionally equivalent types.
- *
  * Generated at: 2025-09-14T22:26:53.096716
  */
 
