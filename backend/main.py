@@ -13,6 +13,7 @@ from app.core.logging_config import (
     app_logger
 )
 from app.core.config import settings
+from app.schemas.response import MessageResponse
 
 
 @asynccontextmanager
@@ -71,9 +72,9 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(seo.router, tags=["seo"])
 
 
-@app.get("/")
-async def root():
-    return {"message": "Vite React FastAPI Template API"}
+@app.get("/", response_model=MessageResponse)
+async def root() -> MessageResponse:
+    return MessageResponse(message="Vite React FastAPI Template API")
 
 
 if __name__ == "__main__":

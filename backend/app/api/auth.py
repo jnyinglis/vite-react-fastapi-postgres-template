@@ -394,12 +394,7 @@ async def apple_auth(
 
     try:
         # Extract identity token from authorization
-        id_token_str = auth_data.authorization.get("id_token")
-        if not id_token_str:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing identity token"
-            )
+        id_token_str = auth_data.authorization.id_token
 
         # Verify Apple ID token with environment-appropriate security
         user_info = await verify_apple_id_token(

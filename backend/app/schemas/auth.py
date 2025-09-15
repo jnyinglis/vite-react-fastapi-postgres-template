@@ -36,9 +36,24 @@ class GoogleAuthRequest(BaseModel):
     credential: str  # Google ID token
 
 
+class AppleAuthAuthorization(BaseModel):
+    code: str
+    id_token: str
+
+
+class AppleAuthUserName(BaseModel):
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+
+
+class AppleAuthUser(BaseModel):
+    name: Optional[AppleAuthUserName] = None
+    email: Optional[str] = None
+
+
 class AppleAuthRequest(BaseModel):
-    authorization: dict  # Contains code and id_token
-    user: Optional[dict] = None  # Contains name and email for first-time users
+    authorization: AppleAuthAuthorization
+    user: Optional[AppleAuthUser] = None
 
 
 class PasswordReset(BaseModel):

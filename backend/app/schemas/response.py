@@ -9,3 +9,7 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: str
     service: str
+
+
+class TextResponse(BaseModel):
+    content: str
