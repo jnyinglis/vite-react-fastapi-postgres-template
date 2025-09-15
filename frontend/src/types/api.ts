@@ -4,7 +4,7 @@
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
  *
- * Generated at: 2025-09-15T09:00:02.430634
+ * Generated at: 2025-09-15T09:11:10.445675
  */
 
 // API Response wrapper types
@@ -156,17 +156,17 @@ export class ApiClient {
     return response;
   }
 
-  async rootGet(): Promise<unknown> {
+  async rootGet(): Promise<MessageResponse> {
     const response = await this.fetch('/', {
       method: 'GET',
     });
     return response.json();
   }
-  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<unknown> {
+  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<string> {
     const response = await this.fetch('/.well-known/security.txt', {
       method: 'GET',
     });
-    return response.json();
+    return response.text();
   }
   async appleAuthApiAuthApplePost(data: AppleAuthRequest): Promise<TokenResponse> {
     const response = await this.fetch('/api/auth/apple', {
@@ -253,17 +253,17 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getRobotsRobotsTxtGet(): Promise<unknown> {
+  async getRobotsRobotsTxtGet(): Promise<string> {
     const response = await this.fetch('/robots.txt', {
       method: 'GET',
     });
-    return response.json();
+    return response.text();
   }
-  async getSitemapSitemapXmlGet(): Promise<unknown> {
+  async getSitemapSitemapXmlGet(): Promise<string> {
     const response = await this.fetch('/sitemap.xml', {
       method: 'GET',
     });
-    return response.json();
+    return response.text();
   }
 }
 

@@ -400,7 +400,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -415,6 +417,9 @@
         "operationId": "get_security_txt__well_known_security_txt_get",
         "responses": {
           "200": {
+            "content": {
+              "text/plain": {}
+            },
             "description": "Successful Response"
           }
         },
@@ -870,6 +875,9 @@
         "operationId": "get_robots_robots_txt_get",
         "responses": {
           "200": {
+            "content": {
+              "text/plain": {}
+            },
             "description": "Successful Response"
           }
         },
@@ -885,6 +893,9 @@
         "operationId": "get_sitemap_sitemap_xml_get",
         "responses": {
           "200": {
+            "content": {
+              "application/xml": {}
+            },
             "description": "Successful Response"
           }
         },

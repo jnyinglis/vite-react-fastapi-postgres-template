@@ -189,6 +189,10 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
                 if 'application/json' in response_content:
                     response_schema = response_content['application/json'].get('schema', {})
                     response_type = get_ts_type(response_schema, definitions)
+                elif 'text/plain' in response_content:
+                    response_type = 'string'
+                elif 'application/xml' in response_content:
+                    response_type = 'string'
 
             # Build method signature
             if request_type:
@@ -198,13 +202,22 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
 
             # Generate method
             http_method = method.upper()
+            # Determine response parsing based on content type
+            response_parsing = "response.json()"
+            if response_type == 'string':
+                # Check if this is a text/xml endpoint
+                if '200' in responses:
+                    response_content = responses['200'].get('content', {})
+                    if 'text/plain' in response_content or 'application/xml' in response_content:
+                        response_parsing = "response.text()"
+
             client_methods.append(f"""
   async {method_name}({params_str}): Promise<{response_type}> {{
     const response = await this.fetch('{path}', {{
       method: '{http_method}',{f'''
       body: JSON.stringify(data),''' if request_type else ''}
     }});
-    return response.json();
+    return {response_parsing};
   }}""")
 
     return f"""
