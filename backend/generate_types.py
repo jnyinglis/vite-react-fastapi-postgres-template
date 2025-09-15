@@ -334,20 +334,6 @@ export namespace {config.namespace} {{
       clientId: string;
     }}
 
-    export interface AppleRequest {{
-      authorization: {{
-        code: string;
-        id_token: string;
-      }};
-      user?: {{
-        email: string;
-        name: {{
-          firstName: string;
-          lastName: string;
-        }};
-      }};
-    }}
-
     export interface MagicLinkRequest {{
       email: string;
     }}
