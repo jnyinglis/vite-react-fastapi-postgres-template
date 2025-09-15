@@ -3,8 +3,6 @@
  *
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
- *
- * Generated at: 2025-09-15T09:11:10.445675
  */
 
 // API Response wrapper types

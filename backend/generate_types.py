@@ -12,7 +12,6 @@ import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass
-from datetime import datetime
 
 # Add the app directory to Python path
 import sys
@@ -291,14 +290,11 @@ def main():
         api_client = generate_api_client(paths, schemas)
 
     # Generate the complete TypeScript file
-    timestamp = datetime.now().isoformat()
     output_content = f'''/**
  * Generated TypeScript types from FastAPI OpenAPI schema
  *
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
- *
- * Generated at: {timestamp}
  */
 
 // API Response wrapper types
