@@ -27,6 +27,16 @@ jobs:
           - 5432:5432
 
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+
+      - name: Enable corepack and verify pnpm
+        run: |
+          corepack enable
+          pnpm --version
+
       - name: Checkout code
         uses: actions/checkout@v5
 
@@ -34,14 +44,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: "20"
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Cache dependencies
         uses: actions/cache@v4
