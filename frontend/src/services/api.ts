@@ -104,7 +104,7 @@ class ApiService {
             // Refresh failed, clear tokens and logout
             this.clearTokens();
             this.failedQueue.forEach(({ reject }) => {
-              reject(refreshError);
+              reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
             });
             this.failedQueue = [];
             window.dispatchEvent(new CustomEvent('auth:logout'));

@@ -118,7 +118,7 @@ function LoginForm() {
     }
 
     // Initialize Apple Sign-In when the component mounts
-    if (isAppleEnabled() && window.AppleID && authConfig.providers.apple.clientId) {
+    if (isAppleEnabled() && window.AppleID && authConfig.providers.apple.clientId && authConfig.providers.apple.redirectUri) {
       window.AppleID.auth.init({
         clientId: authConfig.providers.apple.clientId,
         scope: 'name email',
