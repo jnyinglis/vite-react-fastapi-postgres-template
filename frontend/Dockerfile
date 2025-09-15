@@ -22,7 +22,7 @@ ARG GIT_COMMIT=unknown
 ARG ENVIRONMENT=production
 
 # Create build info
-RUN printf '{\n  "version": "%s",\n  "buildNumber": "%s",\n  "gitCommit": "%s",\n  "environment": "%s",\n  "buildTime": "%s"\n}\n' \
+RUN mkdir -p public && printf '{\n  "version": "%s",\n  "buildNumber": "%s",\n  "gitCommit": "%s",\n  "environment": "%s",\n  "buildTime": "%s"\n}\n' \
   "$BUILD_VERSION" "$BUILD_NUMBER" "$GIT_COMMIT" "$ENVIRONMENT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > public/build-info.json
 
 # Build the application
