@@ -17,7 +17,7 @@ from app.core.config import settings
 class AppleJWTVerifier:
     """Apple ID token verifier using Apple's public keys."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.jwks_url = "https://appleid.apple.com/auth/keys"
         self.jwks_client = PyJWKClient(self.jwks_url)
         self._cached_keys: Optional[Dict] = None
@@ -37,7 +37,7 @@ class AppleJWTVerifier:
                 response = await client.get(self.jwks_url)
                 response.raise_for_status()
 
-                keys_data = response.json()
+                keys_data: Dict[str, Any] = response.json()
                 self._cached_keys = keys_data
                 self._cache_expiry = current_time + self.cache_duration
 
@@ -60,7 +60,7 @@ class AppleJWTVerifier:
             raise ValueError("Development token verification cannot be used in production")
 
         try:
-            return pyjwt.decode(
+            decoded_token: Dict[str, Any] = pyjwt.decode(
                 token,
                 options={
                     "verify_signature": False,
@@ -68,6 +68,7 @@ class AppleJWTVerifier:
                     "verify_aud": False,  # Apple audience can be complex
                 }
             )
+            return decoded_token
         except pyjwt.InvalidTokenError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -91,7 +92,7 @@ class AppleJWTVerifier:
             signing_key = self.jwks_client.get_signing_key_from_jwt(token)
 
             # Verify the token
-            decoded_token = pyjwt.decode(
+            decoded_token: Dict[str, Any] = pyjwt.decode(
                 token,
                 signing_key.key,
                 algorithms=["RS256"],

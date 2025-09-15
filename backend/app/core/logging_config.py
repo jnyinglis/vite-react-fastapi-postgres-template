@@ -10,7 +10,8 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable, Awaitable, Type, Union
+import types
 from pathlib import Path
 from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -24,7 +25,7 @@ from app.core.config import settings
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log all HTTP requests and responses."""
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Generate request ID
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
@@ -120,7 +121,8 @@ class StructuredFormatter(logging.Formatter):
             base_msg = f"{log_data['timestamp']} [{log_data['level']}] {log_data['logger']}: {log_data['message']}"
 
             if 'request_id' in log_data:
-                base_msg += f" [req:{log_data['request_id'][:8]}]"
+                request_id = str(log_data['request_id'])
+                base_msg += f" [req:{request_id[:8]}]"
 
             if len(log_data) > 8:  # More than base fields
                 extra_fields = {k: v for k, v in log_data.items()
@@ -131,7 +133,7 @@ class StructuredFormatter(logging.Formatter):
             return base_msg
 
 
-def setup_logging():
+def setup_logging() -> None:
     """Configure application logging."""
 
     # Create logs directory
@@ -222,7 +224,7 @@ def setup_logging():
     logging.config.dictConfig(logging_config)
 
     # Set up exception logging
-    def handle_exception(exc_type, exc_value, exc_traceback):
+    def handle_exception(exc_type: Type[BaseException], exc_value: BaseException, exc_traceback: Optional[types.TracebackType]) -> None:
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return

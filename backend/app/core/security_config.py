@@ -4,11 +4,11 @@ Production security configuration and hardening utilities.
 This module provides security configurations and utilities for production deployments.
 """
 
-from typing import List, Dict, Any
-from fastapi import Request, HTTPException, status
+from typing import List, Dict, Any, Callable, Awaitable, Optional
+from fastapi import Request, HTTPException, status, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 import time
@@ -19,7 +19,7 @@ from app.core.config import settings
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all responses."""
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         response = await call_next(request)
 
         # Security headers
@@ -55,7 +55,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class RateLimitingMiddleware(BaseHTTPMiddleware):
     """Simple rate limiting middleware."""
 
-    def __init__(self, app, calls: int = 100, period: int = 60):
+    def __init__(self, app: Any, calls: int = 100, period: int = 60) -> None:
         super().__init__(app)
         self.calls = calls
         self.period = period
@@ -74,7 +74,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
 
         return request.client.host if request.client else "unknown"
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Skip rate limiting in development
         if settings.environment == "development":
             return await call_next(request)
@@ -157,7 +157,7 @@ class SecureHTTPBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):
         super().__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request):
+    async def __call__(self, request: Request) -> Optional[HTTPAuthorizationCredentials]:
         credentials = await super().__call__(request)
 
         if not credentials:
@@ -195,7 +195,7 @@ def generate_secure_secret_key() -> str:
     return secrets.token_urlsafe(64)
 
 
-def validate_security_config():
+def validate_security_config() -> List[str]:
     """Validate security configuration for production."""
     issues = []
 
@@ -225,7 +225,7 @@ rate_limiting_middleware = RateLimitingMiddleware
 secure_bearer = SecureHTTPBearer()
 
 
-def apply_security_middleware(app):
+def apply_security_middleware(app: FastAPI) -> FastAPI:
     """Apply all security middleware to the FastAPI app."""
     # Add security headers
     app.add_middleware(SecurityHeadersMiddleware)
