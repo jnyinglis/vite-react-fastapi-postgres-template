@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { AuthState, LoginCredentials, RegisterData, User } from '../types/auth';
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { type AuthState, type LoginCredentials, type RegisterData, type User } from '../types/auth';
 
 type AuthTokens = {
   access_token: string;
