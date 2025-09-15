@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { type LoginCredentials, type RegisterData } from '../types/auth';
 
 const LandingPage: React.FC = () => {
@@ -40,16 +40,17 @@ const LandingPage: React.FC = () => {
         await requestMagicLink(email);
         setMessage('Magic link sent to your email!');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'An error occurred');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error.response?.data?.detail || 'An error occurred');
     }
   };
 
-  const handleGoogleLogin = (credential: string) => {
+  const handleGoogleLogin = useCallback((credential: string) => {
     googleLogin(credential)
       .then(() => navigate('/dashboard'))
       .catch((err) => setError(err.response?.data?.detail || 'Google login failed'));
-  };
+  }, [googleLogin, navigate, setError]);
 
   // Load Google Sign-In script
   React.useEffect(() => {
@@ -63,7 +64,7 @@ const LandingPage: React.FC = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          callback: (response: any) => handleGoogleLogin(response.credential),
+          callback: (response: { credential: string }) => handleGoogleLogin(response.credential),
         });
       }
     };
@@ -71,7 +72,7 @@ const LandingPage: React.FC = () => {
     return () => {
       document.head.removeChild(script);
     };
-  }, []);
+  }, [handleGoogleLogin]);
 
   if (isLoading) {
     return <div className="loading-container">Loading...</div>;

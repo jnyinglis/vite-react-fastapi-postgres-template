@@ -63,7 +63,7 @@ class PWAManager {
     }
 
     // Check for iOS Safari standalone mode
-    if ((window.navigator as any).standalone === true) {
+    if ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) {
       this.isInstalled = true;
     }
   }

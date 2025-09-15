@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import { type AuthState, type LoginCredentials, type RegisterData, type User } from '../types/auth';
+import { AuthContext, type AuthContextType } from './AuthContextDef';
 
 type AuthTokens = {
   access_token: string;
@@ -9,17 +10,6 @@ type AuthTokens = {
 };
 import { apiService } from '../services/api';
 
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<User>;
-  googleLogin: (credential: string) => Promise<void>;
-  requestMagicLink: (email: string) => Promise<void>;
-  verifyMagicLink: (token: string) => Promise<void>;
-  logout: () => void;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -47,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             isLoading: false,
             isAuthenticated: true,
           });
-        } catch (error) {
+        } catch {
           // Token is invalid, clear it
           apiService.clearTokens();
           setState({
@@ -173,10 +163,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};

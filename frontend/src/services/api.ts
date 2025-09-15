@@ -36,7 +36,7 @@ class ApiService {
   private isRefreshing = false;
   private failedQueue: Array<{
     resolve: (token: string) => void;
-    reject: (error: any) => void;
+    reject: (error: Error) => void;
   }> = [];
 
   constructor() {
@@ -160,7 +160,7 @@ class ApiService {
     return response.data;
   }
 
-  async appleAuth(authData: { authorization: any; user?: any }): Promise<AuthTokens> {
+  async appleAuth(authData: { authorization: { code: string; id_token: string }; user?: { name?: { firstName?: string; lastName?: string }; email?: string } }): Promise<AuthTokens> {
     const response: AxiosResponse<AuthTokens> = await this.api.post(
       '/api/auth/apple',
       authData

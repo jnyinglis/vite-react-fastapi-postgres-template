@@ -4,7 +4,7 @@
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
  *
- * Generated at: 2025-09-13T21:53:11.669859
+ * Generated at: 2025-09-14T21:55:01.629846
  */
 
 // API Response wrapper types
@@ -27,12 +27,26 @@ export interface PaginatedResponse<T> {
 }
 
 // Authentication types
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in?: number;
+}
 
 
 
 export interface AppleAuthRequest {
-  authorization: Record<string, any>;
-  user?: Record<string, any> | null;
+  authorization: {
+    code: string;
+    id_token: string;
+  };
+  user?: {
+    name?: {
+      firstName?: string;
+      lastName?: string;
+    };
+    email?: string;
+  } | null;
 }
 
 export interface EmailAuth {
@@ -102,13 +116,7 @@ export interface ValidationError {
 
 
 export class ApiClient {
-  private baseUrl: string;
-  private fetchFn: typeof fetch;
-
-  constructor(baseUrl: string = '/api', fetchFn: typeof fetch = fetch) {
-    this.baseUrl = baseUrl;
-    this.fetchFn = fetchFn;
-  }
+  constructor(private baseUrl: string = '/api', private fetchFn: typeof fetch = fetch) {}
 
   private async fetch(path: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}${path}`;
@@ -118,7 +126,7 @@ export class ApiClient {
 
     const token = localStorage.getItem('access_token');
     if (token) {
-      (defaultHeaders as any)['Authorization'] = `Bearer ${token}`;
+      (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await this.fetchFn(url, {
@@ -142,13 +150,13 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, any>> {
+  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, string | number | boolean>> {
     const response = await this.fetch('/api/build-info', {
       method: 'GET',
     });
     return response.json();
   }
-  async getAuthConfigApiAuthConfigGet(): Promise<Record<string, any>> {
+  async getAuthConfigApiAuthConfigGet(): Promise<Record<string, string | number | boolean>> {
     const response = await this.fetch('/api/auth/config', {
       method: 'GET',
     });
@@ -203,6 +211,12 @@ export class ApiClient {
     });
     return response.json();
   }
+  async logoutApiAuthLogoutPost(): Promise<MessageResponse> {
+    const response = await this.fetch('/api/auth/logout', {
+      method: 'POST',
+    });
+    return response.json();
+  }
   async getCurrentUserProfileApiUsersMeGet(): Promise<User> {
     const response = await this.fetch('/api/users/me', {
       method: 'GET',
@@ -215,7 +229,25 @@ export class ApiClient {
     });
     return response.json();
   }
-  async rootGet(): Promise<any> {
+  async getSitemapSitemapXmlGet(): Promise<string> {
+    const response = await this.fetch('/sitemap.xml', {
+      method: 'GET',
+    });
+    return response.json();
+  }
+  async getRobotsRobotsTxtGet(): Promise<string> {
+    const response = await this.fetch('/robots.txt', {
+      method: 'GET',
+    });
+    return response.json();
+  }
+  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<string> {
+    const response = await this.fetch('/.well-known/security.txt', {
+      method: 'GET',
+    });
+    return response.json();
+  }
+  async rootGet(): Promise<Record<string, unknown>> {
     const response = await this.fetch('/', {
       method: 'GET',
     });
@@ -229,48 +261,52 @@ export const apiClient = new ApiClient();
 // Utility types
 export type AuthProvider = "google" | "apple" | "email";
 
+export interface User {
+  id: string;
+  email: string;
+  fullName?: string;
+  avatarUrl?: string;
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // API endpoint types for better type safety
-export namespace API {
-  export namespace Auth {
-    export interface GoogleRequest {
-      credential: string;
-      clientId: string;
-    }
+export interface APIAuthGoogleRequest {
+  credential: string;
+  clientId: string;
+}
 
-    export interface AppleRequest {
-      authorization: {
-        code: string;
-        id_token: string;
-      };
-      user?: {
-        email: string;
-        name: {
-          firstName: string;
-          lastName: string;
-        };
-      };
-    }
+export interface APIAuthAppleRequest {
+  authorization: {
+    code: string;
+    id_token: string;
+  };
+  user?: {
+    email: string;
+    name: {
+      firstName: string;
+      lastName: string;
+    };
+  };
+}
 
-    export interface MagicLinkRequest {
-      email: string;
-    }
+export interface APIAuthMagicLinkRequest {
+  email: string;
+}
 
-    export interface MagicLinkVerify {
-      token: string;
-    }
-  }
+export interface APIAuthMagicLinkVerify {
+  token: string;
+}
 
-  export namespace Users {
-    export interface CreateRequest {
-      email: string;
-      fullName?: string;
-      password?: string;
-    }
+export interface APIUsersCreateRequest {
+  email: string;
+  fullName?: string;
+  password?: string;
+}
 
-    export interface UpdateRequest {
-      fullName?: string;
-      avatarUrl?: string;
-    }
-  }
+export interface APIUsersUpdateRequest {
+  fullName?: string;
+  avatarUrl?: string;
 }

@@ -340,6 +340,21 @@
         "summary": "Root"
       }
     },
+    "/.well-known/security.txt": {
+      "get": {
+        "description": "Security.txt for responsible disclosure",
+        "operationId": "get_security_txt__well_known_security_txt_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Security Txt",
+        "tags": [
+          "seo"
+        ]
+      }
+    },
     "/api/auth/apple": {
       "post": {
         "description": "Authenticate with Apple Sign-In",
@@ -485,6 +500,28 @@
           }
         },
         "summary": "Login Email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "description": "Logout user by clearing httpOnly cookies",
+        "operationId": "logout_api_auth_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
         "tags": [
           "auth"
         ]
@@ -755,6 +792,36 @@
         "summary": "Get User Profile",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/robots.txt": {
+      "get": {
+        "description": "Serve robots.txt with environment-specific rules",
+        "operationId": "get_robots_robots_txt_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Robots",
+        "tags": [
+          "seo"
+        ]
+      }
+    },
+    "/sitemap.xml": {
+      "get": {
+        "description": "Generate dynamic XML sitemap",
+        "operationId": "get_sitemap_sitemap_xml_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Sitemap",
+        "tags": [
+          "seo"
         ]
       }
     }

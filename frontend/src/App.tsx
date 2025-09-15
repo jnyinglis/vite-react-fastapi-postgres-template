@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import apiService from './services/api';
-import { SEOHead, createWebsiteSchema } from './components/SEOHead';
+import { SEOHead } from './components/SEOHead';
+import { createWebsiteSchema } from './utils/seoSchemas';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import {
   authConfig,
@@ -13,14 +14,58 @@ import {
 } from './config/auth';
 import './App.css';
 
+interface GoogleSignInConfig {
+  client_id: string;
+  callback: (response: GoogleSignInResponse) => void;
+}
+
+interface GoogleSignInResponse {
+  credential: string;
+}
+
+interface GoogleRenderButtonOptions {
+  theme?: string;
+  size?: string;
+  width?: string;
+}
+
+interface AppleIDConfig {
+  clientId: string;
+  scope: string;
+  redirectURI: string;
+  state: string;
+  usePopup: boolean;
+}
+
+interface AppleSignInResponse {
+  authorization: {
+    code: string;
+    id_token: string;
+  };
+  user?: {
+    name?: {
+      firstName?: string;
+      lastName?: string;
+    };
+    email?: string;
+  };
+}
+
 declare global {
   interface Window {
-    google?: any;
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: GoogleSignInConfig) => void;
+          renderButton: (element: Element | null, options: GoogleRenderButtonOptions) => void;
+        };
+      };
+    };
     AppleID?: {
       auth: {
-        init: (config: any) => void;
-        signIn: () => Promise<any>;
-        renderButton: (element: Element | null, options: any) => void;
+        init: (config: AppleIDConfig) => void;
+        signIn: () => Promise<AppleSignInResponse>;
+        renderButton: (element: Element | null, options: GoogleRenderButtonOptions) => void;
       };
     };
   }
@@ -41,7 +86,7 @@ function LoginForm() {
   const [fullName, setFullName] = useState('');
   const [magicToken, setMagicToken] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ email: string; full_name?: string; is_verified: boolean } | null>(null);
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -96,7 +141,7 @@ function LoginForm() {
     };
   }, []);
 
-  const handleGoogleSignIn = async (response: any) => {
+  const handleGoogleSignIn = async (response: GoogleSignInResponse) => {
     try {
       const data = await apiService.googleAuth(response.credential);
       // Store tokens and update auth state
