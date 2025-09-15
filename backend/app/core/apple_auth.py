@@ -12,6 +12,7 @@ import jwt as pyjwt
 from jwt import PyJWKClient
 from fastapi import HTTPException, status
 from app.core.config import settings
+from app.schemas.auth import AppleAuthUser
 
 
 class AppleJWTVerifier:
@@ -130,7 +131,7 @@ class AppleJWTVerifier:
         else:
             return await self.verify_production_token(token)
 
-    def extract_user_info(self, decoded_token: Dict[str, Any], user_data: Optional[Dict] = None) -> Dict[str, Any]:
+    def extract_user_info(self, decoded_token: Dict[str, Any], user_data: Optional[AppleAuthUser] = None) -> Dict[str, Any]:
         """Extract user information from decoded token and user data."""
         apple_user_id = decoded_token.get("sub")
         email = decoded_token.get("email")
@@ -144,10 +145,9 @@ class AppleJWTVerifier:
 
         # Extract name from user data (only provided on first sign-in)
         full_name = None
-        if user_data and "name" in user_data:
-            name_data = user_data["name"]
-            first_name = name_data.get("firstName", "")
-            last_name = name_data.get("lastName", "")
+        if user_data and user_data.name:
+            first_name = user_data.name.firstName or ""
+            last_name = user_data.name.lastName or ""
             if first_name or last_name:
                 full_name = f"{first_name} {last_name}".strip()
 
@@ -163,7 +163,7 @@ class AppleJWTVerifier:
 apple_jwt_verifier = AppleJWTVerifier()
 
 
-async def verify_apple_id_token(token: str, user_data: Optional[Dict] = None) -> Dict[str, Any]:
+async def verify_apple_id_token(token: str, user_data: Optional[AppleAuthUser] = None) -> Dict[str, Any]:
     """
     Verify Apple ID token and extract user information.
 

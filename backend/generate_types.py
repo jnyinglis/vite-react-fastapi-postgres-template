@@ -12,7 +12,6 @@ import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass
-from datetime import datetime
 
 # Add the app directory to Python path
 import sys
@@ -66,7 +65,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
             properties = []
             required = set(schema.get('required', []))
 
-            for prop_name, prop_schema in schema['properties'].items():
+            for prop_name, prop_schema in sorted(schema['properties'].items()):
                 prop_type = get_ts_type(prop_schema, definitions, required)
                 optional = "?" if prop_name not in required else ""
                 sanitized_name = sanitize_name(prop_name)
@@ -74,7 +73,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
 
             return "{\n" + "\n".join(properties) + "\n}"
         else:
-            return "Record<string, any>"
+            return "Record<string, unknown>"
 
     # Handle unions/oneOf
     if 'oneOf' in schema or 'anyOf' in schema:
@@ -108,7 +107,7 @@ def get_ts_type(schema: Dict[str, Any], definitions: Dict[str, Any], required_fi
         elif schema_format == 'uuid':
             return 'string'
 
-    return type_mapping.get(schema_type, 'any')
+    return type_mapping.get(schema_type, 'unknown')
 
 
 def generate_interface(name: str, schema: Dict[str, Any], definitions: Dict[str, Any]) -> str:
@@ -117,7 +116,7 @@ def generate_interface(name: str, schema: Dict[str, Any], definitions: Dict[str,
     required = set(schema.get('required', []))
 
     if 'properties' in schema:
-        for prop_name, prop_schema in schema['properties'].items():
+        for prop_name, prop_schema in sorted(schema['properties'].items()):
             prop_type = get_ts_type(prop_schema, definitions, required)
             optional = "?" if prop_name not in required else ""
             sanitized_name = sanitize_name(prop_name)
@@ -145,8 +144,8 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
     """Generate a simple API client with typed methods."""
     client_methods = []
 
-    for path, methods in paths.items():
-        for method, operation in methods.items():
+    for path, methods in sorted(paths.items()):
+        for method, operation in sorted(methods.items()):
             if method.lower() not in ['get', 'post', 'put', 'patch', 'delete']:
                 continue
 
@@ -183,12 +182,16 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
                     request_type = get_ts_type(request_schema, definitions)
 
             # Response type
-            response_type = 'any'
+            response_type = 'unknown'
             if '200' in responses:
                 response_content = responses['200'].get('content', {})
                 if 'application/json' in response_content:
                     response_schema = response_content['application/json'].get('schema', {})
                     response_type = get_ts_type(response_schema, definitions)
+                elif 'text/plain' in response_content:
+                    response_type = 'string'
+                elif 'application/xml' in response_content:
+                    response_type = 'string'
 
             # Build method signature
             if request_type:
@@ -198,18 +201,33 @@ def generate_api_client(paths: Dict[str, Any], definitions: Dict[str, Any]) -> s
 
             # Generate method
             http_method = method.upper()
+            # Determine response parsing based on content type
+            response_parsing = "response.json()"
+            if response_type == 'string':
+                # Check if this is a text/xml endpoint
+                if '200' in responses:
+                    response_content = responses['200'].get('content', {})
+                    if 'text/plain' in response_content or 'application/xml' in response_content:
+                        response_parsing = "response.text()"
+
             client_methods.append(f"""
   async {method_name}({params_str}): Promise<{response_type}> {{
     const response = await this.fetch('{path}', {{
       method: '{http_method}',{f'''
       body: JSON.stringify(data),''' if request_type else ''}
     }});
-    return response.json();
+    return {response_parsing};
   }}""")
 
     return f"""
 export class ApiClient {{
-  constructor(private baseUrl: string = '/api', private fetchFn: typeof fetch = fetch) {{}}
+  private baseUrl: string;
+  private fetchFn: typeof fetch;
+
+  constructor(baseUrl: string = '/api', fetchFn: typeof fetch = fetch) {{
+    this.baseUrl = baseUrl;
+    this.fetchFn = fetchFn;
+  }}
 
   private async fetch(path: string, options: RequestInit = {{}}) {{
     const url = `${{this.baseUrl}}${{path}}`;
@@ -219,7 +237,7 @@ export class ApiClient {{
 
     const token = localStorage.getItem('access_token');
     if (token) {{
-      (defaultHeaders as any)['Authorization'] = `Bearer ${{token}}`;
+      (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${{token}}`;
     }}
 
     const response = await this.fetchFn(url, {{
@@ -260,8 +278,8 @@ def main():
     # Generate TypeScript interfaces
     interfaces = []
 
-    # Generate interfaces for all schemas
-    for name, schema in schemas.items():
+    # Generate interfaces for all schemas (sorted for deterministic output)
+    for name, schema in sorted(schemas.items()):
         if schema.get('type') == 'object' or 'properties' in schema:
             interface = generate_interface(name, schema, schemas)
             interfaces.append(interface)
@@ -272,18 +290,11 @@ def main():
         api_client = generate_api_client(paths, schemas)
 
     # Generate the complete TypeScript file
-    timestamp = datetime.now().isoformat()
     output_content = f'''/**
  * Generated TypeScript types from FastAPI OpenAPI schema
  *
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
- *
- * NOTE: Generated types may differ between Python versions (3.11 vs 3.13+)
- * due to differences in FastAPI/Pydantic OpenAPI schema generation.
- * This is expected and both versions produce functionally equivalent types.
- *
- * Generated at: {timestamp}
  */
 
 // API Response wrapper types
@@ -319,60 +330,29 @@ export interface TokenResponse {{
 // Utility types
 export type AuthProvider = "google" | "apple" | "email";
 
-export interface User {{
-  id: string;
-  email: string;
-  fullName?: string;
-  avatarUrl?: string;
-  isActive: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+// API endpoint types for better type safety
+export interface ApiAuthGoogleRequest {{
+  credential: string;
+  clientId: string;
 }}
 
-// API endpoint types for better type safety
-export namespace {config.namespace} {{
-  export namespace Auth {{
-    export interface GoogleRequest {{
-      credential: string;
-      clientId: string;
-    }}
+export interface ApiAuthMagicLinkRequest {{
+  email: string;
+}}
 
-    export interface AppleRequest {{
-      authorization: {{
-        code: string;
-        id_token: string;
-      }};
-      user?: {{
-        email: string;
-        name: {{
-          firstName: string;
-          lastName: string;
-        }};
-      }};
-    }}
+export interface ApiAuthMagicLinkVerify {{
+  token: string;
+}}
 
-    export interface MagicLinkRequest {{
-      email: string;
-    }}
+export interface ApiUsersCreateRequest {{
+  email: string;
+  fullName?: string;
+  password?: string;
+}}
 
-    export interface MagicLinkVerify {{
-      token: string;
-    }}
-  }}
-
-  export namespace Users {{
-    export interface CreateRequest {{
-      email: string;
-      fullName?: string;
-      password?: string;
-    }}
-
-    export interface UpdateRequest {{
-      fullName?: string;
-      avatarUrl?: string;
-    }}
-  }}
+export interface ApiUsersUpdateRequest {{
+  fullName?: string;
+  avatarUrl?: string;
 }}
 '''
 
