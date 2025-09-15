@@ -4,7 +4,7 @@
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
  *
- * Generated at: 2025-09-14T22:26:53.096716
+ * Generated at: 2025-09-15T08:05:51.316285
  */
 
 // API Response wrapper types
@@ -35,18 +35,24 @@ export interface TokenResponse {
 
 
 
+export interface AppleAuthAuthorization {
+  code: string;
+  idToken: string;
+}
+
 export interface AppleAuthRequest {
-  authorization: {
-    code: string;
-    id_token: string;
-  };
-  user?: {
-    name?: {
-      firstName?: string;
-      lastName?: string;
-    };
-    email?: string;
-  } | null;
+  authorization: AppleAuthAuthorization;
+  user?: AppleAuthUser | null;
+}
+
+export interface AppleAuthUser {
+  email?: string | null;
+  name?: AppleAuthUserName | null;
+}
+
+export interface AppleAuthUserName {
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 export interface EmailAuth {
@@ -56,8 +62,8 @@ export interface EmailAuth {
 
 export interface EmailRegister {
   email: string;
-  password: string;
   fullName?: string | null;
+  password: string;
 }
 
 export interface GoogleAuthRequest {
@@ -69,9 +75,9 @@ export interface HTTPValidationError {
 }
 
 export interface HealthResponse {
+  service: string;
   status: string;
   timestamp: string;
-  service: string;
 }
 
 export interface MagicLinkRequest {
@@ -92,19 +98,19 @@ export interface TokenRefresh {
 
 export interface TokenResponse {
   accessToken: string;
+  expiresIn: number;
   refreshToken: string;
   tokenType?: string;
-  expiresIn: number;
 }
 
 export interface User {
+  avatarUrl?: string | null;
+  createdAt: string;
   email: string;
   fullName?: string | null;
-  avatarUrl?: string | null;
-  isActive?: boolean;
   id: string;
+  isActive?: boolean;
   isVerified: boolean;
-  createdAt: string;
   updatedAt?: string | null;
 }
 
@@ -116,13 +122,7 @@ export interface ValidationError {
 
 
 export class ApiClient {
-  private baseUrl: string;
-  private fetchFn: typeof fetch;
-
-  constructor(baseUrl: string = '/api', fetchFn: typeof fetch = fetch) {
-    this.baseUrl = baseUrl;
-    this.fetchFn = fetchFn;
-  }
+  constructor(private baseUrl: string = '/api', private fetchFn: typeof fetch = fetch) {}
 
   private async fetch(path: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}${path}`;
@@ -132,7 +132,7 @@ export class ApiClient {
 
     const token = localStorage.getItem('access_token');
     if (token) {
-      (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+      (defaultHeaders as any)['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await this.fetchFn(url, {
@@ -150,21 +150,35 @@ export class ApiClient {
     return response;
   }
 
-  async healthCheckApiHealthGet(): Promise<HealthResponse> {
-    const response = await this.fetch('/api/health', {
+  async rootGet(): Promise<any> {
+    const response = await this.fetch('/', {
       method: 'GET',
     });
     return response.json();
   }
-  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, string | number | boolean>> {
-    const response = await this.fetch('/api/build-info', {
+  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<any> {
+    const response = await this.fetch('/.well-known/security.txt', {
       method: 'GET',
     });
     return response.json();
   }
-  async getAuthConfigApiAuthConfigGet(): Promise<Record<string, string | number | boolean>> {
+  async appleAuthApiAuthApplePost(data: AppleAuthRequest): Promise<TokenResponse> {
+    const response = await this.fetch('/api/auth/apple', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
+  async getAuthConfigApiAuthConfigGet(): Promise<Record<string, any>> {
     const response = await this.fetch('/api/auth/config', {
       method: 'GET',
+    });
+    return response.json();
+  }
+  async googleAuthApiAuthGooglePost(data: GoogleAuthRequest): Promise<TokenResponse> {
+    const response = await this.fetch('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
     return response.json();
   }
@@ -175,10 +189,9 @@ export class ApiClient {
     });
     return response.json();
   }
-  async registerEmailApiAuthRegisterEmailPost(data: EmailRegister): Promise<User> {
-    const response = await this.fetch('/api/auth/register/email', {
+  async logoutApiAuthLogoutPost(): Promise<MessageResponse> {
+    const response = await this.fetch('/api/auth/logout', {
       method: 'POST',
-      body: JSON.stringify(data),
     });
     return response.json();
   }
@@ -196,20 +209,6 @@ export class ApiClient {
     });
     return response.json();
   }
-  async googleAuthApiAuthGooglePost(data: GoogleAuthRequest): Promise<TokenResponse> {
-    const response = await this.fetch('/api/auth/google', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  }
-  async appleAuthApiAuthApplePost(data: AppleAuthRequest): Promise<TokenResponse> {
-    const response = await this.fetch('/api/auth/apple', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  }
   async refreshTokenApiAuthRefreshPost(data: TokenRefresh): Promise<TokenResponse> {
     const response = await this.fetch('/api/auth/refresh', {
       method: 'POST',
@@ -217,9 +216,22 @@ export class ApiClient {
     });
     return response.json();
   }
-  async logoutApiAuthLogoutPost(): Promise<MessageResponse> {
-    const response = await this.fetch('/api/auth/logout', {
+  async registerEmailApiAuthRegisterEmailPost(data: EmailRegister): Promise<User> {
+    const response = await this.fetch('/api/auth/register/email', {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
+  async getBuildInfoApiBuildInfoGet(): Promise<Record<string, any>> {
+    const response = await this.fetch('/api/build-info', {
+      method: 'GET',
+    });
+    return response.json();
+  }
+  async healthCheckApiHealthGet(): Promise<HealthResponse> {
+    const response = await this.fetch('/api/health', {
+      method: 'GET',
     });
     return response.json();
   }
@@ -235,26 +247,14 @@ export class ApiClient {
     });
     return response.json();
   }
-  async getSitemapSitemapXmlGet(): Promise<string> {
-    const response = await this.fetch('/sitemap.xml', {
-      method: 'GET',
-    });
-    return response.json();
-  }
-  async getRobotsRobotsTxtGet(): Promise<string> {
+  async getRobotsRobotsTxtGet(): Promise<any> {
     const response = await this.fetch('/robots.txt', {
       method: 'GET',
     });
     return response.json();
   }
-  async getSecurityTxtWellKnownSecurityTxtGet(): Promise<string> {
-    const response = await this.fetch('/.well-known/security.txt', {
-      method: 'GET',
-    });
-    return response.json();
-  }
-  async rootGet(): Promise<Record<string, unknown>> {
-    const response = await this.fetch('/', {
+  async getSitemapSitemapXmlGet(): Promise<any> {
+    const response = await this.fetch('/sitemap.xml', {
       method: 'GET',
     });
     return response.json();
@@ -267,42 +267,44 @@ export const apiClient = new ApiClient();
 // Utility types
 export type AuthProvider = "google" | "apple" | "email";
 
-
-// API endpoint types for better type safety
-export interface APIAuthGoogleRequest {
-  credential: string;
-  clientId: string;
-}
-
-export interface APIAuthAppleRequest {
-  authorization: {
-    code: string;
-    id_token: string;
-  };
-  user?: {
-    email: string;
-    name: {
-      firstName: string;
-      lastName: string;
-    };
-  };
-}
-
-export interface APIAuthMagicLinkRequest {
+export interface User {
+  id: string;
   email: string;
-}
-
-export interface APIAuthMagicLinkVerify {
-  token: string;
-}
-
-export interface APIUsersCreateRequest {
-  email: string;
-  fullName?: string;
-  password?: string;
-}
-
-export interface APIUsersUpdateRequest {
   fullName?: string;
   avatarUrl?: string;
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// API endpoint types for better type safety
+export namespace API {
+  export namespace Auth {
+    export interface GoogleRequest {
+      credential: string;
+      clientId: string;
+    }
+
+    export interface MagicLinkRequest {
+      email: string;
+    }
+
+    export interface MagicLinkVerify {
+      token: string;
+    }
+  }
+
+  export namespace Users {
+    export interface CreateRequest {
+      email: string;
+      fullName?: string;
+      password?: string;
+    }
+
+    export interface UpdateRequest {
+      fullName?: string;
+      avatarUrl?: string;
+    }
+  }
 }

@@ -1,30 +1,99 @@
 {
   "components": {
     "schemas": {
+      "AppleAuthAuthorization": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id_token": {
+            "title": "Id Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "id_token"
+        ],
+        "title": "AppleAuthAuthorization",
+        "type": "object"
+      },
       "AppleAuthRequest": {
         "properties": {
           "authorization": {
-            "additionalProperties": true,
-            "title": "Authorization",
-            "type": "object"
+            "$ref": "#/components/schemas/AppleAuthAuthorization"
           },
           "user": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/components/schemas/AppleAuthUser"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "User"
+            ]
           }
         },
         "required": [
           "authorization"
         ],
         "title": "AppleAuthRequest",
+        "type": "object"
+      },
+      "AppleAuthUser": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AppleAuthUserName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "AppleAuthUser",
+        "type": "object"
+      },
+      "AppleAuthUserName": {
+        "properties": {
+          "firstName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firstname"
+          },
+          "lastName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastname"
+          }
+        },
+        "title": "AppleAuthUserName",
         "type": "object"
       },
       "EmailAuth": {
