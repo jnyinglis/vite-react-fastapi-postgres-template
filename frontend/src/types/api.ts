@@ -4,7 +4,7 @@
  * 🚨 DO NOT EDIT MANUALLY 🚨
  * This file is auto-generated. Run 'make generate-types' to regenerate.
  *
- * Generated at: 2025-09-14T21:55:01.629846
+ * Generated at: 2025-09-14T22:26:53.096716
  */
 
 // API Response wrapper types
