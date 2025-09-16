@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -10,6 +10,8 @@ from app.schemas.auth import GoogleAuthRequest, AppleAuthRequest, AppleAuthAutho
 
 class TestAuthenticationFlow:
     """Integration tests for complete authentication flows."""
+
+    pytestmark = pytest.mark.asyncio
 
     @pytest.mark.integration
     @pytest.mark.auth
@@ -27,10 +29,13 @@ class TestAuthenticationFlow:
                     )
 
         # Mock Google token verification
-        with patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.id_token.verify_oauth2_token') as mock_verify:
             mock_verify.return_value = {
+                'sub': 'google_new_user',
                 'email': 'newuser@example.com',
-                'name': 'New User'
+                'name': 'New User',
+                'picture': None,
+                'iss': 'accounts.google.com',
             }
 
             # Authenticate
@@ -69,10 +74,13 @@ class TestAuthenticationFlow:
             credential="fake_jwt_token",
                     )
 
-        with patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.id_token.verify_oauth2_token') as mock_verify:
             mock_verify.return_value = {
+                'sub': 'google_123',
                 'email': 'existing@example.com',
-                'name': 'Existing User Updated'
+                'name': 'Existing User Updated',
+                'picture': None,
+                'iss': 'accounts.google.com',
             }
 
             response = await async_client.post(
@@ -114,8 +122,13 @@ class TestAuthenticationFlow:
             'sub': 'apple_user_123'
         }
 
-        with patch('pyjwt.decode') as mock_decode:
-            mock_decode.return_value = mock_payload
+        with patch('app.api.auth.verify_apple_id_token', new_callable=AsyncMock) as mock_verify:
+            mock_verify.return_value = {
+                "apple_user_id": mock_payload["sub"],
+                "email": mock_payload["email"],
+                "full_name": "Apple User",
+                "email_verified": True,
+            }
 
             response = await async_client.post(
                 "/api/auth/apple",
@@ -161,8 +174,13 @@ class TestAuthenticationFlow:
             'sub': 'apple_existing_123'
         }
 
-        with patch('pyjwt.decode') as mock_decode:
-            mock_decode.return_value = mock_payload
+        with patch('app.api.auth.verify_apple_id_token', new_callable=AsyncMock) as mock_verify:
+            mock_verify.return_value = {
+                "apple_user_id": mock_payload['sub'],
+                "email": mock_payload['email'],
+                "full_name": "Existing Apple User",
+                "email_verified": True,
+            }
 
             response = await async_client.post(
                 "/api/auth/apple",
@@ -233,8 +251,13 @@ class TestAuthenticationFlow:
             'sub': 'apple_cross_123'
         }
 
-        with patch('pyjwt.decode') as mock_decode:
-            mock_decode.return_value = mock_payload
+        with patch('app.api.auth.verify_apple_id_token', new_callable=AsyncMock) as mock_verify:
+            mock_verify.return_value = {
+                "apple_user_id": mock_payload['sub'],
+                "email": mock_payload['email'],
+                "full_name": "Cross User",
+                "email_verified": True,
+            }
 
             response = await async_client.post(
                 "/api/auth/apple",
@@ -254,10 +277,13 @@ class TestAuthenticationFlow:
             credential="fake_jwt_token",
                     )
 
-        with patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.id_token.verify_oauth2_token') as mock_verify:
             mock_verify.return_value = {
+                'sub': 'google_persistent',
                 'email': 'persistent@example.com',
-                'name': 'Persistent User'
+                'name': 'Persistent User',
+                'picture': None,
+                'iss': 'accounts.google.com',
             }
 
             # Authenticate

@@ -1,7 +1,7 @@
 import pytest
-import asyncio
+import pytest_asyncio
 from typing import Any, Dict, Generator, AsyncGenerator
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncEngine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -16,15 +16,7 @@ from main import app
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     """Create a test database engine."""
     engine = create_async_engine(
@@ -46,7 +38,7 @@ async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
     await engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_session(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     """Create a test database session."""
     async_session_maker = async_sessionmaker(
@@ -75,10 +67,11 @@ def client(override_get_session: Any) -> Generator[TestClient, None, None]:
         yield test_client
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_client(override_get_session: Any) -> AsyncGenerator[AsyncClient, None]:
-    """Create an async test client."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:  # type: ignore[call-arg]
+    """Create an async test client using ASGI transport."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 
@@ -99,3 +92,16 @@ def sample_user_credentials() -> Dict[str, str]:
         "email": "test@example.com",
         "password": "testpassword123"
     }
+
+
+def pytest_configure(config: Any) -> None:
+    """Register custom markers to satisfy --strict-markers."""
+    marker_definitions = {
+        "unit": "Unit tests",
+        "integration": "Integration tests",
+        "auth": "Authentication tests",
+        "database": "Database tests",
+        "slow": "Slow running tests",
+    }
+    for name, description in marker_definitions.items():
+        config.addinivalue_line("markers", f"{name}: {description}")

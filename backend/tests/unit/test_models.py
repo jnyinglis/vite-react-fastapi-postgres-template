@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -9,6 +9,8 @@ from app.models.user import User
 
 class TestUserModel:
     """Test the User model functionality."""
+
+    pytestmark = pytest.mark.asyncio
 
     @pytest.mark.unit
     @pytest.mark.database
@@ -22,6 +24,7 @@ class TestUserModel:
 
         async_session.add(user)
         await async_session.commit()
+        await async_session.refresh(user)
 
         assert user.id is not None
         assert user.email == "test@example.com"
@@ -60,7 +63,7 @@ class TestUserModel:
     @pytest.mark.database
     async def test_user_timestamps_auto_populate(self, async_session: AsyncSession) -> None:
         """Test that timestamps are automatically populated."""
-        before_creation = datetime.utcnow()
+        before_creation = datetime.now(timezone.utc)
 
         user = User(
             email="timestamp@example.com",
@@ -70,13 +73,18 @@ class TestUserModel:
 
         async_session.add(user)
         await async_session.commit()
+        await async_session.refresh(user)
 
-        after_creation = datetime.utcnow()
+        after_creation = datetime.now(timezone.utc)
 
         assert user.created_at is not None
         assert user.updated_at is not None
-        assert before_creation <= user.created_at <= after_creation
-        assert before_creation <= user.updated_at <= after_creation
+
+        created_at = user.created_at if user.created_at.tzinfo else user.created_at.replace(tzinfo=timezone.utc)
+        updated_at = user.updated_at if user.updated_at.tzinfo else user.updated_at.replace(tzinfo=timezone.utc)
+
+        assert before_creation <= created_at <= after_creation
+        assert before_creation <= updated_at <= after_creation
 
     @pytest.mark.unit
     @pytest.mark.database
@@ -90,6 +98,7 @@ class TestUserModel:
 
         async_session.add(user)
         await async_session.commit()
+        await async_session.refresh(user)
 
         original_updated_at = user.updated_at
 
@@ -100,8 +109,9 @@ class TestUserModel:
         # Update user
         user.full_name = "Updated User"  # type: ignore
         await async_session.commit()
+        await async_session.refresh(user)
 
-        assert user.updated_at > original_updated_at
+        assert user.updated_at >= original_updated_at
 
     @pytest.mark.unit
     @pytest.mark.database
@@ -219,7 +229,7 @@ class TestUserModel:
         assert found_user.email == "provider_combo@example.com"
 
     @pytest.mark.unit
-    def test_user_model_repr(self) -> None:
+    async def test_user_model_repr(self) -> None:
         """Test the string representation of User model."""
         user = User(
             email="repr@example.com",

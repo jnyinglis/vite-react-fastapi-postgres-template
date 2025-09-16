@@ -1,7 +1,7 @@
 import pytest
 import jwt as pyjwt
 from typing import Any, Dict
-from unittest.mock import patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from fastapi import HTTPException
 from httpx import AsyncClient
 
@@ -11,6 +11,8 @@ from app.schemas.auth import GoogleAuthRequest, AppleAuthRequest, AppleAuthAutho
 class TestAuthEndpoints:
     """Test authentication endpoint behaviors."""
 
+    pytestmark = pytest.mark.asyncio
+
     @pytest.mark.auth
     async def test_google_auth_success(self, async_client: AsyncClient, sample_user_data: Dict[str, str]) -> None:
         """Test successful Google authentication."""
@@ -18,10 +20,13 @@ class TestAuthEndpoints:
             credential="fake_jwt_token"
         )
 
-        with patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.id_token.verify_oauth2_token') as mock_verify:
             mock_verify.return_value = {
+                'sub': 'google_user_id',
                 'email': sample_user_data['email'],
-                'name': sample_user_data['full_name']
+                'name': sample_user_data['full_name'],
+                'picture': None,
+                'iss': 'accounts.google.com',
             }
 
             response = await async_client.post(
@@ -42,7 +47,7 @@ class TestAuthEndpoints:
             credential="invalid_jwt_token"
         )
 
-        with patch('app.api.auth.verify_google_token') as mock_verify:
+        with patch('app.api.auth.id_token.verify_oauth2_token') as mock_verify:
             mock_verify.side_effect = Exception("Invalid token")
 
             response = await async_client.post(
@@ -75,8 +80,13 @@ class TestAuthEndpoints:
             )
         )
 
-        with patch('pyjwt.decode') as mock_decode:
-            mock_decode.return_value = mock_payload
+        with patch('app.api.auth.verify_apple_id_token', new_callable=AsyncMock) as mock_verify:
+            mock_verify.return_value = {
+                'apple_user_id': mock_payload['sub'],
+                'email': mock_payload['email'],
+                'full_name': 'Test User',
+                'email_verified': True,
+            }
 
             response = await async_client.post(
                 "/api/auth/apple",
@@ -99,8 +109,8 @@ class TestAuthEndpoints:
             )
         )
 
-        with patch('pyjwt.decode') as mock_decode:
-            mock_decode.side_effect = pyjwt.InvalidTokenError("Invalid token")
+        with patch('app.api.auth.verify_apple_id_token', new_callable=AsyncMock) as mock_verify:
+            mock_verify.side_effect = pyjwt.InvalidTokenError("Invalid token")
 
             response = await async_client.post(
                 "/api/auth/apple",
@@ -145,15 +155,10 @@ class TestAuthEndpoints:
         # This would need to be implemented in the actual auth endpoint
         token = "fake_magic_link_token"
 
-        with patch('app.api.auth.verify_magic_link_token') as mock_verify:
-            mock_verify.return_value = {
-                'email': sample_user_data['email']
-            }
+        response = await async_client.get(f"/api/auth/verify-magic-link?token={token}")
 
-            response = await async_client.get(f"/api/auth/verify-magic-link?token={token}")
-
-            # This endpoint might not exist yet, so we expect 404 for now
-            assert response.status_code in [200, 404]
+        # This endpoint might not exist yet, so we expect 404 for now
+        assert response.status_code == 404
 
     @pytest.mark.auth
     async def test_verify_magic_link_invalid_token(self, async_client: AsyncClient) -> None:
