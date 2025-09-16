@@ -201,7 +201,7 @@ class TestAuthenticationFlow:
 
         # Step 1: Request magic link
         response = await async_client.post(
-            "/api/auth/magic-link",
+            "/api/auth/magic-link/request",
             json=magic_link_data.model_dump()
         )
 

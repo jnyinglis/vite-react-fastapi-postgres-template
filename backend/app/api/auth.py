@@ -8,7 +8,7 @@ import secrets
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt as pyjwt
 import json
 import urllib.request
@@ -182,7 +182,7 @@ async def request_magic_link(
         )
     # Generate magic link token
     token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(minutes=auth_config.magic_link.token_expire_minutes)
+    expires = datetime.now(timezone.utc) + timedelta(minutes=auth_config.magic_link.token_expire_minutes)
 
     # Find or create user
     result = await session.execute(select(User).where(User.email == request_data.email))
@@ -248,7 +248,7 @@ async def verify_magic_link(
             detail="Invalid or expired token"
         )
 
-    if datetime.utcnow() > user.email_verification_expires:
+    if datetime.now(timezone.utc) > user.email_verification_expires:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token has expired"

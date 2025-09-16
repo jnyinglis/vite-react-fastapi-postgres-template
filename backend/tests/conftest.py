@@ -6,10 +6,25 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncEngine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 import asyncpg  # type: ignore[import-untyped]
+import os
+from dotenv import load_dotenv
 
 from app.core.database import Base, get_session
 from app.core.config import settings
 from main import app
+
+# Load test environment variables
+load_dotenv(".env.test", override=True)
+
+# Force reload of auth config after loading test environment
+from app.config.auth import auth_config
+# Monkey patch the auth_config to use test values
+auth_config.email_password.enabled = True
+auth_config.google.enabled = True
+auth_config.google.client_id = "test_google_client_id"
+auth_config.apple.enabled = True
+auth_config.apple.client_id = "test_apple_client_id"
+auth_config.magic_link.enabled = True
 
 
 # Test database URL - use in-memory SQLite for fast tests
@@ -71,7 +86,7 @@ def client(override_get_session: Any) -> Generator[TestClient, None, None]:
 async def async_client(override_get_session: Any) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client using ASGI transport."""
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
 
 

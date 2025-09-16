@@ -48,7 +48,7 @@ class TestAuthEndpoints:
         )
 
         with patch('app.api.auth.id_token.verify_oauth2_token') as mock_verify:
-            mock_verify.side_effect = Exception("Invalid token")
+            mock_verify.side_effect = ValueError("Invalid token")
 
             response = await async_client.post(
                 "/api/auth/google",
@@ -127,7 +127,7 @@ class TestAuthEndpoints:
         )
 
         response = await async_client.post(
-            "/api/auth/magic-link",
+            "/api/auth/magic-link/request",
             json=magic_link_data.model_dump()
         )
 
@@ -143,7 +143,7 @@ class TestAuthEndpoints:
         }
 
         response = await async_client.post(
-            "/api/auth/magic-link",
+            "/api/auth/magic-link/request",
             json=magic_link_data
         )
 
@@ -155,20 +155,26 @@ class TestAuthEndpoints:
         # This would need to be implemented in the actual auth endpoint
         token = "fake_magic_link_token"
 
-        response = await async_client.get(f"/api/auth/verify-magic-link?token={token}")
+        response = await async_client.post(
+            "/api/auth/magic-link/verify",
+            json={"token": token}
+        )
 
-        # This endpoint might not exist yet, so we expect 404 for now
-        assert response.status_code == 404
+        # This endpoint exists but would require a valid token
+        assert response.status_code == 400
 
     @pytest.mark.auth
     async def test_verify_magic_link_invalid_token(self, async_client: AsyncClient) -> None:
         """Test magic link verification with invalid token."""
         token = "invalid_token"
 
-        response = await async_client.get(f"/api/auth/verify-magic-link?token={token}")
+        response = await async_client.post(
+            "/api/auth/magic-link/verify",
+            json={"token": token}
+        )
 
-        # This endpoint might not exist yet, so we expect 404 for now
-        assert response.status_code in [400, 404]
+        # This endpoint exists but would require a valid token
+        assert response.status_code == 400
 
 
 class TestTokenGeneration:
