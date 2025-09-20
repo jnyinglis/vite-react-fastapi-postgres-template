@@ -322,6 +322,28 @@ body {
   margin-top: 1rem;
 }
 
+/* Responsive Auth Container */
+.auth-main-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Desktop responsive improvements */
+@media (min-width: 769px) {
+  .auth-main-container {
+    max-width: 500px;
+    padding: 3rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .auth-main-container {
+    max-width: 600px;
+    padding: 4rem;
+  }
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .auth-container {
