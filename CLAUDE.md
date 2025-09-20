@@ -93,6 +93,50 @@ alembic revision --autogenerate -m "description"
 3. **Testing**: Run both frontend and backend tests before commits
 4. **Production**: Build optimized containers for deployment to GHCR
 
+## GitHub Workflow Rules
+
+### Issue-Driven Development
+- **Always create GitHub issues** for bugs, features, or improvements
+- Use descriptive titles and detailed descriptions
+- Include problem statement, expected behavior, and suggested solutions
+- Reference issues in commits and PRs using `fixes #123`, `resolves #123`, or `closes #123`
+
+### Branch Management
+- **Create feature branches** from `master` for all changes
+- Use descriptive branch names: `fix/issue-description-123`, `feature/new-capability`
+- **Never commit directly to master** - always use pull requests
+- Keep branches focused on single issues or related changes
+
+### Pull Request Process
+1. **Create PR** with clear title and detailed description
+2. **Reference the issue** it addresses (e.g., "Closes #123")
+3. **Include testing evidence** and before/after comparisons
+4. **Wait for CI/CD checks** to pass before merging
+5. **Use squash merge** to maintain clean commit history
+6. **Delete branches** after successful merge
+
+### Commit Message Standards
+```bash
+# Good commit messages:
+git commit -m "Fix responsive design for landing page - resolves #38"
+git commit -m "Add user authentication endpoints - fixes #25, #26"
+
+# Include Claude attribution:
+🤖 Generated with [Claude Code](https://claude.ai/code)
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### CI/CD Integration
+- **Test workflow** validates code quality on every PR
+- **Build workflow** only runs on master branch merges
+- **All tests must pass** before merging is allowed
+- Infrastructure changes should be separate PRs from feature changes
+
+### Issue References in Code
+- Use `#number` carefully in commit messages (auto-links to issues)
+- Escape with backticks or backslash if referring to non-issues: `\#42` or `#42`
+- Multiple issues: `fixes #123, addresses #124, relates to #125`
+
 ## Mobile Considerations
 - Frontend must be responsive and mobile-friendly
 - Touch-friendly UI components and interactions
