@@ -264,7 +264,7 @@ function LoginForm() {
           description="User dashboard for authenticated users"
           jsonLD={websiteSchema}
         />
-        <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
+        <div className="auth-main-container">
         <h1>Welcome, {currentUser.full_name || currentUser.email}!</h1>
         <p>You are successfully authenticated.</p>
 
@@ -311,7 +311,7 @@ function LoginForm() {
         canonical={`${window.location.origin}${window.location.pathname}`}
         jsonLD={websiteSchema}
       />
-      <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
+      <div className="auth-main-container">
         <PWAInstallPrompt />
         <h1>Full-Stack Template</h1>
       <p>Vite + React + FastAPI + PostgreSQL</p>
