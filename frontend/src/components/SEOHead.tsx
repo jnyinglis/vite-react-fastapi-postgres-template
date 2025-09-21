@@ -18,7 +18,7 @@ interface SEOHeadProps {
 
 const DEFAULT_SEO = {
   title: 'Vite React FastAPI Template',
-  description: 'A modern full-stack template with React, FastAPI, and PostgreSQL featuring secure authentication and responsive design.',
+  description: 'A test application',
   keywords: 'react, fastapi, postgresql, template, authentication, full-stack, typescript, python',
   ogType: 'website',
   twitterCard: 'summary_large_image'

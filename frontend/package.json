@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "test-cloudflare-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -34,5 +34,6 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.43.0",
     "vite": "^7.1.5"
-  }
+  },
+  "description": "Test Cloudflare App - A modern full-stack application"
 }
