@@ -14,6 +14,7 @@ class SetupWizard {
     this.updateProgress();
     this.updateColorPreviews();
     this.generateSecureDefaults();
+    this.updateDeploymentPreview();
   }
 
   bindEvents() {
@@ -25,7 +26,13 @@ class SetupWizard {
     document.getElementById('app-name').addEventListener('input', (e) => this.updateAppSlug(e.target.value));
     document.getElementById('theme-color').addEventListener('input', (e) => this.updateColorPreview('theme-color-preview', e.target.value));
     document.getElementById('background-color').addEventListener('input', (e) => this.updateColorPreview('bg-color-preview', e.target.value));
-    document.getElementById('domain').addEventListener('input', (e) => this.updateProductionCallback(e.target.value));
+    document.getElementById('domain').addEventListener('input', (e) => {
+      this.updateProductionCallback(e.target.value);
+      this.updateDomainBase(e.target.value);
+    });
+
+    // Cloudflare functionality
+    document.getElementById('cloudflare-enabled').addEventListener('change', (e) => this.toggleCloudflareSection(e.target.checked));
 
     // Generators
     document.getElementById('generate-secret').addEventListener('click', () => this.generateSecret());
@@ -76,7 +83,9 @@ class SetupWizard {
       'GITHUB_REPOSITORY': 'github-repository',
       'IMAGE_TAG': 'image-tag',
       'DOMAIN': 'domain',
-      'ACME_EMAIL': 'acme-email'
+      'DOMAIN_BASE': 'domain-base',
+      'ACME_EMAIL': 'acme-email',
+      'CF_DNS_API_TOKEN': 'cf-dns-api-token'
     };
 
     return mappings[key] ? document.getElementById(mappings[key]) : null;
@@ -109,6 +118,33 @@ class SetupWizard {
   updateProductionCallback(domain) {
     const callback = domain ? `https://${domain}/auth/callback` : 'https://[domain]/auth/callback';
     document.getElementById('production-callback').textContent = callback;
+  }
+
+  updateDomainBase(domain) {
+    document.getElementById('domain-base').value = domain || '';
+    this.updateDeploymentPreview();
+  }
+
+  toggleCloudflareSection(enabled) {
+    const section = document.getElementById('cloudflare-section');
+    section.style.display = enabled ? 'block' : 'none';
+    this.updateDeploymentPreview();
+  }
+
+  updateDeploymentPreview() {
+    const cloudflareEnabled = document.getElementById('cloudflare-enabled').checked;
+
+    document.getElementById('docker-compose-file').textContent = cloudflareEnabled
+      ? 'docker-compose.cf.prod.yml'
+      : 'docker-compose.prod.yml';
+
+    document.getElementById('ssl-challenge-type').textContent = cloudflareEnabled
+      ? 'DNS-01 (Cloudflare)'
+      : 'TLS-ALPN-01 (Port 443)';
+
+    document.getElementById('wildcard-support').textContent = cloudflareEnabled
+      ? 'Supported (*.domain.com)'
+      : 'Not supported';
   }
 
   updatePreview() {
@@ -219,10 +255,45 @@ class SetupWizard {
         }
         break;
 
+      case 3:
+        // Validate domain and deployment fields
+        const domain = document.getElementById('domain').value.trim();
+        const acmeEmail = document.getElementById('acme-email').value.trim();
+        const cloudflareEnabled = document.getElementById('cloudflare-enabled').checked;
+
+        if (domain && !this.isValidDomain(domain)) {
+          this.showFieldError('domain', 'Please enter a valid domain (e.g., example.com)');
+          isValid = false;
+        }
+
+        if (acmeEmail && !this.isValidEmail(acmeEmail)) {
+          this.showFieldError('acme-email', 'Please enter a valid email address');
+          isValid = false;
+        }
+
+        if (cloudflareEnabled) {
+          const cfToken = document.getElementById('cf-dns-api-token').value.trim();
+          if (!cfToken) {
+            this.showFieldError('cf-dns-api-token', 'Cloudflare DNS API token is required when Cloudflare is enabled');
+            isValid = false;
+          }
+        }
+        break;
+
       // Add more validation as needed
     }
 
     return isValid;
+  }
+
+  isValidDomain(domain) {
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+    return domainRegex.test(domain);
+  }
+
+  isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 
   showFieldError(fieldId, message) {
@@ -308,6 +379,8 @@ class SetupWizard {
   }
 
   gatherConfiguration() {
+    const cloudflareEnabled = document.getElementById('cloudflare-enabled').checked;
+
     return {
       'App Name': document.getElementById('app-name').value,
       'App Slug': document.getElementById('app-slug').value,
@@ -321,7 +394,10 @@ class SetupWizard {
       'GITHUB_REPOSITORY': document.getElementById('github-repository').value,
       'IMAGE_TAG': document.getElementById('image-tag').value,
       'DOMAIN': document.getElementById('domain').value,
-      'ACME_EMAIL': document.getElementById('acme-email').value
+      'DOMAIN_BASE': document.getElementById('domain-base').value,
+      'ACME_EMAIL': document.getElementById('acme-email').value,
+      'CLOUDFLARE_ENABLED': cloudflareEnabled ? 'true' : 'false',
+      'CF_DNS_API_TOKEN': cloudflareEnabled ? document.getElementById('cf-dns-api-token').value : ''
     };
   }
 
@@ -349,7 +425,11 @@ class SetupWizard {
         theme_color: config['Theme Color'],
         background_color: config['Background Color'],
         domain: config['DOMAIN'],
-        github_repository: config['GITHUB_REPOSITORY']
+        domain_base: config['DOMAIN_BASE'],
+        acme_email: config['ACME_EMAIL'],
+        github_repository: config['GITHUB_REPOSITORY'],
+        cloudflare_enabled: config['CLOUDFLARE_ENABLED'] === 'true',
+        cf_dns_api_token: config['CF_DNS_API_TOKEN']
       };
 
       const response = await fetch(`${this.apiBase}/apply-configuration`, {
@@ -422,7 +502,9 @@ class SetupWizard {
       'GITHUB_REPOSITORY': config['GITHUB_REPOSITORY'],
       'IMAGE_TAG': config['IMAGE_TAG'],
       'DOMAIN': config['DOMAIN'],
-      'ACME_EMAIL': config['ACME_EMAIL']
+      'DOMAIN_BASE': config['DOMAIN_BASE'],
+      'ACME_EMAIL': config['ACME_EMAIL'],
+      'CF_DNS_API_TOKEN': config['CF_DNS_API_TOKEN']
     };
 
     // Filter out empty values
@@ -430,7 +512,8 @@ class SetupWizard {
       Object.entries(envUpdates).filter(([_, value]) => value && value.trim() !== '')
     );
 
-    const response = await fetch(`${this.apiBase}/vars`, {
+    // Use the new formatted .env generation endpoint
+    const response = await fetch(`${this.apiBase}/generate-env`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ updates: filteredUpdates })
@@ -438,6 +521,12 @@ class SetupWizard {
 
     if (!response.ok) {
       throw new Error(`Failed to update environment variables: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    this.log(`📝 Generated .env file with proper formatting and comments`);
+    if (result.backup_file) {
+      this.log(`💾 Previous .env backed up as: ${result.backup_file}`);
     }
 
     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate processing time

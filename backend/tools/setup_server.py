@@ -40,7 +40,11 @@ class AppConfiguration(BaseModel):
     theme_color: str = "#646cff"
     background_color: str = "#ffffff"
     domain: str = ""
+    domain_base: str = ""
+    acme_email: str = ""
     github_repository: str = ""
+    cloudflare_enabled: bool = False
+    cf_dns_api_token: str = ""
 
 
 class ConfigurationUpdate(BaseModel):
@@ -50,7 +54,10 @@ class ConfigurationUpdate(BaseModel):
 REQUIRED_ENV_KEYS = [
     # Deployment and domain
     "DOMAIN",
+    "DOMAIN_BASE",
     "ACME_EMAIL",
+    # Cloudflare DNS challenge
+    "CF_DNS_API_TOKEN",
     # Backend secrets / config
     "SECRET_KEY",
     "POSTGRES_PASSWORD",
@@ -156,6 +163,56 @@ def write_env_updates(updates: Dict[str, str]) -> None:
     # Apply updates
     for key, value in updates.items():
         set_key(str(ENV_FILE), key, value if value is not None else "")
+
+
+def generate_env_with_comments(updates: Dict[str, str]) -> str:
+    """Generate a properly formatted .env file with comments from .env.example."""
+    # Read the example file to get structure and comments
+    if not ENV_EXAMPLE_FILE.exists():
+        # Fallback to simple format if no example file
+        lines = []
+        for key, value in updates.items():
+            if value and value.strip():
+                lines.append(f"{key}={value}")
+        return "\n".join(lines)
+
+    # Parse the example file to preserve structure and comments
+    example_content = ENV_EXAMPLE_FILE.read_text()
+    lines = []
+    current_section = None
+
+    for line in example_content.splitlines():
+        line = line.strip()
+
+        # Preserve comments and empty lines
+        if line.startswith('#') or line == '':
+            lines.append(line)
+            continue
+
+        # Handle environment variable lines
+        if '=' in line:
+            key = line.split('=')[0].strip()
+            if key in updates and updates[key] and updates[key].strip():
+                # Use the new value without quotes
+                value = updates[key].strip()
+                lines.append(f"{key}={value}")
+            elif key in updates:
+                # Key exists but value is empty, skip or use default
+                lines.append(f"# {key}=")
+            else:
+                # Keep the example line as a comment for reference
+                lines.append(f"# {line}")
+
+    # Add any new keys that weren't in the example
+    added_keys = set(updates.keys()) - set(key.split('=')[0].strip() for key in example_content.splitlines() if '=' in key)
+    if added_keys:
+        lines.append("")
+        lines.append("# Additional Configuration")
+        for key in sorted(added_keys):
+            if updates[key] and updates[key].strip():
+                lines.append(f"{key}={updates[key].strip()}")
+
+    return "\n".join(lines)
 
 
 def generate_secure_key(length: int = 64) -> str:
@@ -287,6 +344,42 @@ def set_vars(payload: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
     return {"ok": True, "written": filtered}
 
 
+@app.post("/api/generate-env")
+def generate_env_file(payload: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
+    """Generate a properly formatted .env file with comments."""
+    updates = payload.get("updates", {})
+    if not isinstance(updates, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload: updates required")
+
+    # Filter valid keys
+    filtered = {k: v for k, v in updates.items() if isinstance(k, str)}
+
+    # Generate the formatted content
+    env_content = generate_env_with_comments(filtered)
+
+    # Write the file
+    if not ENV_FILE.exists():
+        ENV_FILE.write_text("")
+
+    # Backup existing file
+    timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+    backup = ENV_FILE.parent / f".env.backup.{timestamp}"
+    try:
+        backup.write_text(ENV_FILE.read_text())
+    except Exception:
+        pass
+
+    # Write the new content
+    ENV_FILE.write_text(env_content)
+
+    return {
+        "ok": True,
+        "written": filtered,
+        "backup_file": str(backup.name),
+        "preview": env_content[:500] + "..." if len(env_content) > 500 else env_content
+    }
+
+
 @app.get("/api/scripts")
 def scripts() -> Dict[str, List[str]]:
     return {
@@ -355,12 +448,31 @@ def apply_configuration(config: AppConfiguration) -> Dict[str, Any]:
 
             if config.domain:
                 env_updates["DOMAIN"] = config.domain
+                env_updates["DOMAIN_BASE"] = config.domain_base or config.domain
                 env_updates["FRONTEND_URL"] = f"https://{config.domain}"
+
+            if config.acme_email:
+                env_updates["ACME_EMAIL"] = config.acme_email
+
+            if config.cloudflare_enabled and config.cf_dns_api_token:
+                env_updates["CF_DNS_API_TOKEN"] = config.cf_dns_api_token
 
             if config.github_repository:
                 env_updates["GITHUB_REPOSITORY"] = config.github_repository
 
-            write_env_updates(env_updates)
+            # Use the new formatted .env generation
+            env_content = generate_env_with_comments(env_updates)
+
+            # Backup and write
+            timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+            backup = ENV_FILE.parent / f".env.backup.{timestamp}"
+            try:
+                if ENV_FILE.exists():
+                    backup.write_text(ENV_FILE.read_text())
+            except Exception:
+                pass
+
+            ENV_FILE.write_text(env_content)
             results["updated"].append(".env")
         except Exception as e:
             results["errors"].append(f".env: {str(e)}")

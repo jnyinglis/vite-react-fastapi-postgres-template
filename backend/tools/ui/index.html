@@ -532,6 +532,54 @@
               </div>
             </div>
 
+            <!-- Cloudflare Configuration Section -->
+            <div class="form-group full">
+              <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                <input type="checkbox" id="cloudflare-enabled" style="width: auto; margin: 0;">
+                <span style="font-size: 16px; font-weight: 600;">Enable Cloudflare DNS Challenge</span>
+              </label>
+              <div class="input-help">
+                Use Cloudflare DNS challenge for SSL certificates. Enables wildcard certificates and improved reliability.
+                <a href="https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" target="_blank" style="color: var(--primary);">
+                  Learn how to create Cloudflare API tokens →
+                </a>
+              </div>
+            </div>
+
+            <div id="cloudflare-section" style="display: none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="domain-base">Domain Base</label>
+                  <input type="text" id="domain-base" placeholder="myapp.com" readonly>
+                  <div class="input-help">Base domain for wildcard certificates (auto-generated from domain)</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="cf-dns-api-token">Cloudflare DNS API Token</label>
+                  <input type="password" id="cf-dns-api-token" placeholder="Enter your Cloudflare DNS API token">
+                  <div class="input-help">Token with Zone:DNS:Edit + Zone:Read permissions</div>
+                </div>
+              </div>
+
+              <div class="form-group full">
+                <h4 style="margin: 16px 0 8px 0; color: var(--text-secondary);">Cloudflare API Token Setup</h4>
+                <div style="background: var(--bg-primary); padding: 16px; border-radius: 8px; font-size: 14px; line-height: 1.6;">
+                  <ol style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
+                    <li>Go to <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" style="color: var(--primary);">Cloudflare Dashboard → My Profile → API Tokens</a></li>
+                    <li>Click "Create Token" → Use "Custom token" template</li>
+                    <li>Set permissions:
+                      <ul style="margin: 8px 0;">
+                        <li><strong>Zone:DNS:Edit</strong> - for managing DNS records</li>
+                        <li><strong>Zone:Zone:Read</strong> - for reading zone information</li>
+                      </ul>
+                    </li>
+                    <li>Set zone resources: <strong>Include: Specific zone → [your domain]</strong></li>
+                    <li>Copy the generated token to the field above</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
             <div class="form-group full">
               <h3>OAuth Redirect URLs</h3>
               <div class="input-help">
@@ -545,6 +593,24 @@
                 <div class="config-item">
                   <span class="config-key">Production:</span>
                   <span class="config-value" id="production-callback">https://[domain]/auth/callback</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group full" id="deployment-type-preview">
+              <h3>Deployment Configuration</h3>
+              <div class="config-preview">
+                <div class="config-item">
+                  <span class="config-key">Docker Compose File:</span>
+                  <span class="config-value" id="docker-compose-file">docker-compose.prod.yml</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-key">SSL Challenge Type:</span>
+                  <span class="config-value" id="ssl-challenge-type">TLS-ALPN-01 (Port 443)</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-key">Wildcard Certificates:</span>
+                  <span class="config-value" id="wildcard-support">Not supported</span>
                 </div>
               </div>
             </div>
